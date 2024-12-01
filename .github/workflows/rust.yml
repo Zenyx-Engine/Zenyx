@@ -14,6 +14,12 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
+        arch: [x86_64, aarch64]
+        include:
+          - arch: x86_64
+            target: x86_64-unknown-linux-gnu
+          - arch: aarch64
+            target: aarch64-unknown-linux-gnu
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -24,22 +30,18 @@ jobs:
       with:
         toolchain: stable
         override: true
-        target: x86_64-unknown-linux-gnu
+        target: ${{ matrix.target }}
     
     - name: Build
-      run: cargo build --release
+      run: cargo build --release --target ${{ matrix.target }}
       
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo test --verbose --target ${{ matrix.target }}
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: ${{ runner.os }}-binary
+        name: Zenyx-${{ runner.os }}-${{ matrix.arch }}-binary
         path: |
-          target/release/*.exe
-          target/release/*
-          !target/release/*.d
-          !target/release/*.pdb
-    
-      
+          target/${{ matrix.target }}/release/*.exe
+          target/${{ matrix.target }}/release/*[^.]*
