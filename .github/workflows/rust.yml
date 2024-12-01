@@ -14,13 +14,18 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        arch: [x86_64]
+        arch: [x86_64, aarch64]
         include:
           - arch: x86_64
             target: x86_64-unknown-linux-gnu
           - os: macos-latest
             arch: x86_64
             target: x86_64-apple-darwin
+          - arch: aarch64
+            target: aarch64-unknown-linux-gnu
+          - os: macos-latest
+            arch: aarch64
+            target: aarch64-apple-darwin
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -43,6 +48,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: Zenyx-${{ runner.os }}-${{ matrix.arch }}-binary
-        path: |
-          target/${{ matrix.target }}/release/*.exe
-          target/${{ matrix.target }}/release/*[^.]*
+        path: target/${{ matrix.target }}/release/zenyx*
