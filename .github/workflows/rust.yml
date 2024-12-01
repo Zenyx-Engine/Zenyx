@@ -31,6 +31,17 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
+    - name: Install cross-compilation dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+    - name: Install cross-compilation dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install FiloSottile/musl-cross/musl-cross
+        
     - name: Install Rust
       uses: actions-rs/toolchain@v1
       with:
