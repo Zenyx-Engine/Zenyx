@@ -26,6 +26,9 @@ jobs:
           - os: macos-latest
             arch: aarch64
             target: aarch64-apple-darwin
+        exclude:
+          - os: windows-latest
+            arch: aarch64
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -48,12 +51,23 @@ jobs:
         toolchain: stable
         override: true
         target: ${{ matrix.target }}
+        profile: minimal
     
     - name: Build
-      run: cargo build --release --target ${{ matrix.target }}
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: --release --target ${{ matrix.target }}
+      env:
+        CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
       
     - name: Run tests
-      run: cargo test --verbose --target ${{ matrix.target }}
+      uses: actions-rs/cargo@v1
+      with:
+        command: test
+        args: --verbose --target ${{ matrix.target }}
+      env:
+        CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
