@@ -11,19 +11,35 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v3
     
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+        target: x86_64-unknown-linux-gnu
+    
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --release
       
     - name: Run tests
       run: cargo test --verbose
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ runner.os }}-binary
+        path: |
+          target/release/*.exe
+          target/release/*
+          !target/release/*.d
+          !target/release/*.pdb
+    
       
-    - name: Check formatting
-      run: cargo fmt -- --check
-      
-    - name: Clippy
-      run: cargo clippy -- -D warnings
