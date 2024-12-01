@@ -1,0 +1,32 @@
+[package]
+name = "xtask"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+clap = { version = "4.5.20", features = ["derive"] }
+
+[profile.dev]
+rpath = false
+panic = "abort"
+lto = "off"
+opt-level = 0
+debug = false
+overflow-checks = false
+incremental = true
+codegen-units = 256
+
+strip = "symbols"
+debug-assertions = false
+
+[profile.dev.package."*"]
+opt-level = 0
+debug = false
+overflow-checks = false
+incremental = true
+codegen-units = 256
+
+strip = "symbols"
+debug-assertions = false
+
