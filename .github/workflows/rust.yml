@@ -15,11 +15,19 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         arch: [x86_64, aarch64]
+        exclude:
+          - os: windows-latest
+            arch: aarch64
         include:
-          - arch: x86_64
+          - os: ubuntu-latest
+            arch: x86_64
             target: x86_64-unknown-linux-gnu
-          - arch: aarch64
+          - os: ubuntu-latest
+            arch: aarch64
             target: aarch64-unknown-linux-gnu
+          - os: windows-latest
+            arch: x86_64
+            target: x86_64-pc-windows-msvc
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -33,7 +41,7 @@ jobs:
         target: ${{ matrix.target }}
     
     - name: Install cross-compilation tools
-      if: matrix.arch == 'aarch64'
+      if: matrix.arch == 'aarch64' && matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
         sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
@@ -51,7 +59,5 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: Zenyx-${{ runner.os }}-${{ matrix.arch }}-binary
-        path: |
-          target/${{ matrix.target }}/release/*.exe
-          target/${{ matrix.target }}/release/*[^.]*
+        name: Zenyx-${{ matrix.os == 'windows-latest' && 'windows' || 'linux' }}-${{ matrix.arch }}-binary
+        path: target/${{ matrix.target }}/release/${{ matrix.os == 'windows-latest' && '*.exe' || '*[^.]*' }}
