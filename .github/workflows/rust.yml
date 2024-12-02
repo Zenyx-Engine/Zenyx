@@ -27,6 +27,9 @@ jobs:
           - os: macos-latest
             arch: aarch64
             target: aarch64-apple-darwin
+          - os: windows-latest
+            arch: x86_64
+            target: x86_64-pc-windows-msvc
         exclude:
           - os: windows-latest
             arch: aarch64
@@ -39,7 +42,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
-        sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+        sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu qemu-user
 
     - name: Install cross-compilation dependencies (macOS)
       if: runner.os == 'macOS'
@@ -69,6 +72,7 @@ jobs:
         args: --verbose --target ${{ matrix.target }}
       env:
         CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+        QEMU_LD_PREFIX: /usr/aarch64-linux-gnu
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
