@@ -8,7 +8,7 @@ use winit::event_loop::{ControlFlow, EventLoop};
 
 
 
-pub fn init_render() -> Result<()> {
+pub fn init_renderer() -> Result<()> {
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
     let mut app = App::default();
