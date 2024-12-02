@@ -1,4 +1,4 @@
-name: Compile & test Zenyx ⚡
+name: Build Zenyx ⚡
 
 on:
   push:
@@ -39,7 +39,7 @@ jobs:
     - name: 📥 Clone repository
       uses: actions/checkout@v3
     
-    - name: 🛠️ Install cross-compilation dependencies (Ubuntu🐧)
+    - name: 🛠️ Install cross-compilation dependencies (Ubuntu)
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
@@ -50,7 +50,7 @@ jobs:
       run: |
         brew install FiloSottile/musl-cross/musl-cross
         
-    - name: 🦀 Install Rust
+    - name: 🔧 Install Rust
       uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
@@ -65,61 +65,6 @@ jobs:
         args: --release --target ${{ matrix.target }}
       env:
         CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
-
-    - name: 📦 Upload artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: Zenyx-${{ runner.os }}-${{ matrix.arch }}-binary
-        path: target/${{ matrix.target }}/release/zenyx*
-
-  test:
-    needs: build
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        arch: [x86_64, aarch64]
-        include:
-          - arch: x86_64
-            target: x86_64-unknown-linux-gnu
-          - os: macos-latest
-            arch: x86_64
-            target: x86_64-apple-darwin
-          - arch: aarch64
-            target: aarch64-unknown-linux-gnu
-          - os: macos-latest
-            arch: aarch64
-            target: aarch64-apple-darwin
-          - os: windows-latest
-            arch: x86_64
-            target: x86_64-pc-windows-msvc
-        exclude:
-          - os: windows-latest
-            arch: aarch64
-    runs-on: ${{ matrix.os }}
-
-    steps:
-    - name: 📥 Clone repository
-      uses: actions/checkout@v3
-    
-    - name: 🛠️ Install cross-compilation dependencies (Ubuntu🐧)
-      if: runner.os == 'Linux'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu qemu-user
-
-    - name: 🛠️ Install cross-compilation dependencies (macOS🍎) 
-      if: runner.os == 'macOS'
-      run: |
-        brew install FiloSottile/musl-cross/musl-cross
-        
-    - name: 🦀 Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        override: true
-        target: ${{ matrix.target }}
-        profile: minimal
       
     - name: 🧪 Run tests
       uses: actions-rs/cargo@v1
@@ -129,3 +74,9 @@ jobs:
       env:
         CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
         QEMU_LD_PREFIX: /usr/aarch64-linux-gnu
+
+    - name: 📦 Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: Zenyx-${{ runner.os }}-${{ matrix.arch }}-binary
+        path: target/${{ matrix.target }}/release/zenyx*
