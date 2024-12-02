@@ -2,7 +2,7 @@ pub mod commands;
 pub mod repl;
 
 use lazy_static::lazy_static;
-use log2::{debug, error, info};
+use log::{debug, info};
 use parking_lot::RwLock;
 use std::{borrow::Borrow, collections::HashMap, sync::Arc};
 
@@ -26,11 +26,10 @@ pub struct Command {
 
 impl Command {
     pub fn execute(&self, args: Option<Vec<String>>) {
-        //debug!("Executing command: {}", self.name);
         match &self.function {
             Callable::Simple(f) => {
                 if let Some(args) = args {
-                    error!(
+                    eprintln!(
                         "Command expected 0 arguments but {} args were given. Ignoring..",
                         args.len()
                     );
@@ -39,7 +38,7 @@ impl Command {
             }
             Callable::WithArgs(f) => match args {
                 Some(args) => f(args),
-                None => error!("Command expected arguments but received 0"),
+                None => eprintln!("Command expected arguments but received 0"),
             },
         }
     }
@@ -76,7 +75,7 @@ impl CommandList {
         func: Callable,
         arg_count: Option<u8>,
     ) {
-        debug!("Adding command: {}", name);
+        info!("Adding command: {}", name);
         let mut commands = self.commands.write();
 
         commands.push(Command {
@@ -88,24 +87,22 @@ impl CommandList {
     }
 
     fn add_alias(&self, name: String, alias: String) {
-        //println!("Input alias: {}", alias);
         if self.aliases.read().contains_key(&alias) {
-            error!("Alias: '{}' already exists", alias);
+            eprintln!("Alias: '{}' already exists", alias);
             return;
         }
         let mut commands = self.commands.write();
         if let Some(command) = commands.iter_mut().find(|cmd| cmd.name == name) {
-            info!("Adding alias: {} for cmd: {}", alias, command.name);
+            debug!("Adding alias: {} for cmd: {}", alias, command.name);
             self.aliases
                 .write()
                 .insert(alias.to_string(), name.to_string());
         } else {
-            error!("Command: '{}' was not found", name);
+            eprintln!("Command: '{}' was not found", name);
         }
     }
 
     fn execute_command(&self, mut name: String, args: Option<Vec<String>>) {
-        //info!("received input command: {}", name);
         let commands = self.commands.borrow();
         if self.aliases.read().contains_key(&name) {
             name = self
@@ -116,7 +113,7 @@ impl CommandList {
                 .1
                 .to_string();
 
-            debug!("changed to {}", name);
+            debug!("changed to {}", &name);
         }
         if let Some(command) = commands.read().iter().find(|cmd| cmd.name == name) {
             match (command.arg_count, args.as_ref()) {
