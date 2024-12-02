@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/Logo.svg" alt="Zenyx engine" width="200"/>
+<img src="assets/Logo.svg" alt="Zenyx engine" width="250"/>
 
 
 ![Version](https://img.shields.io/badge/version-0.1.0-blue)![License](https://img.shields.io/github/license/Caznix/Zenyx)
