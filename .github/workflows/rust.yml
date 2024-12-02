@@ -70,7 +70,7 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: test
-        args: --verbose --target ${{ matrix.target }}
+        args: --target ${{ matrix.target }}
       env:
         CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
         QEMU_LD_PREFIX: /usr/aarch64-linux-gnu
