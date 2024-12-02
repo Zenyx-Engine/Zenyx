@@ -1,6 +1,5 @@
 use super::{commands, Callable, COMMAND_LIST};
 use chrono::Local;
-use log::{error, info};
 use reedline::{Prompt, Reedline, Signal};
 use regex::Regex;
 
@@ -97,7 +96,7 @@ fn evaluate_command(input: &str) {
     for command in commands {
         let command = command.trim();
         if command.is_empty() {
-            info!("Empty command, skipping.");
+            println!("Empty command, skipping.");
             continue;
         }
 
@@ -135,11 +134,11 @@ pub async fn handle_repl() {
                 }
             }
             Ok(Signal::CtrlC) => {
-                info!("\nCONTROL+C RECEIVED, TERMINATING");
+                println!("\nCONTROL+C RECEIVED, TERMINATING");
                 std::process::exit(0);
             }
             err => {
-                error!("Error: {:?}", err);
+                eprintln!("Error: {:?}", err);
             }
         }
     }
