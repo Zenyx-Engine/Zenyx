@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use tokio::task::spawn_blocking;
 use winit::window::Window;
 
 pub struct WgpuCtx<'window> {
@@ -46,13 +45,14 @@ impl<'window> WgpuCtx<'window> {
         surface.configure(&device, &surface_config);
 
         Ok(WgpuCtx {
-            device: device,
-            queue: queue,
-            surface: surface,
-            surface_config: surface_config,
-            adapter: adapter,
+            device,
+            queue,
+            surface,
+            surface_config,
+            adapter,
         })
     }
+
     pub fn new_blocking(window: Arc<Window>) -> Result<WgpuCtx<'window>> {
         tokio::task::block_in_place(|| {
             tokio::runtime::Runtime::new()
@@ -60,41 +60,47 @@ impl<'window> WgpuCtx<'window> {
                 .block_on(async { WgpuCtx::new(window).await })
         })
     }
+
     pub fn resize(&mut self, new_size: (u32, u32)) {
         let (width, height) = new_size;
         self.surface_config.width = width.max(1);
         self.surface_config.height = height.max(1);
         self.surface.configure(&self.device, &self.surface_config);
     }
+
     pub fn draw(&mut self) {
         let surface_texture = self
-        .surface
-        .get_current_texture()
-        .expect("Failed to get surface texture");
-    let view = surface_texture.texture.create_view(&wgpu::TextureViewDescriptor::default());
-    let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
-    {
-        let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-            label: None,
-            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                view: &view,
-                resolve_target: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color {
-                        r: 0.1,
-                        g: 0.2,
-                        b: 0.3,
-                        a: 1.0,
-                    }),
-                    store: wgpu::StoreOp::Store,
-                },
-            })],
-            depth_stencil_attachment: None,
-            timestamp_writes: None,
-            occlusion_query_set: None,
-        });
-    }
-    self.queue.submit(Some(encoder.finish()));
-    surface_texture.present();
+            .surface
+            .get_current_texture()
+            .expect("Failed to get surface texture");
+        let view = surface_texture
+            .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
+        let mut encoder = self
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+        {
+            let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: None,
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                            r: 0.1,
+                            g: 0.2,
+                            b: 0.3,
+                            a: 1.0,
+                        }),
+                        store: wgpu::StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+            });
+        }
+        self.queue.submit(Some(encoder.finish()));
+        surface_texture.present();
     }
 }

@@ -2,7 +2,6 @@ use super::{commands, Callable, COMMAND_LIST};
 use chrono::Local;
 use reedline::{Prompt, Reedline, Signal};
 use regex::Regex;
-use std::{borrow::Borrow, collections::HashMap, sync::Arc};
 
 fn register_commands() {
     COMMAND_LIST.add_command(
@@ -42,7 +41,7 @@ fn register_commands() {
 
     // EXAMPLE
     // Adding aliases for commands
-    COMMAND_LIST.add_alias("cls".to_string(), "clear".to_string()); // Likely unintended; consider removing or renaming.
+    COMMAND_LIST.add_alias("clear".to_string(), "cls".to_string());
 }
 
 struct ZPrompt {
