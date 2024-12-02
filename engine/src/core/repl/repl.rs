@@ -1,7 +1,10 @@
 use super::{commands, Callable, COMMAND_LIST};
+use anyhow::Result;
 use chrono::Local;
-use reedline::{Prompt, Reedline, Signal};
+use colored::Colorize;
+use log::debug;
 use regex::Regex;
+use rustyline::DefaultEditor;
 
 fn register_commands() {
     COMMAND_LIST.add_command(
@@ -44,46 +47,7 @@ fn register_commands() {
     COMMAND_LIST.add_alias("clear".to_string(), "cls".to_string());
 }
 
-struct ZPrompt {
-    left_text: String,
-    right_text: String,
-}
 
-impl Prompt for ZPrompt {
-    fn render_prompt_left(&self) -> std::borrow::Cow<str> {
-        std::borrow::Cow::Borrowed(&self.left_text)
-    }
-
-    fn render_prompt_right(&self) -> std::borrow::Cow<str> {
-        std::borrow::Cow::Borrowed(&self.right_text)
-    }
-
-    fn render_prompt_history_search_indicator(
-        &self,
-        _history_search: reedline::PromptHistorySearch,
-    ) -> std::borrow::Cow<str> {
-        std::borrow::Cow::Borrowed("")
-    }
-
-    fn render_prompt_indicator(
-        &self,
-        prompt_mode: reedline::PromptEditMode,
-    ) -> std::borrow::Cow<str> {
-        match prompt_mode {
-            reedline::PromptEditMode::Default => std::borrow::Cow::Borrowed(">>"),
-            reedline::PromptEditMode::Emacs => {
-                let timestamp = Local::now().format("[%H:%M:%S.%3f/SHELL] >>\t").to_string();
-                std::borrow::Cow::Owned(timestamp)
-            }
-            reedline::PromptEditMode::Vi(_) => std::borrow::Cow::Borrowed("vi>>"),
-            reedline::PromptEditMode::Custom(_) => std::borrow::Cow::Borrowed("custom>>"),
-        }
-    }
-
-    fn render_prompt_multiline_indicator(&self) -> std::borrow::Cow<str> {
-        std::borrow::Cow::Borrowed("><")
-    }
-}
 
 fn evaluate_command(input: &str) {
     if input.trim().is_empty() {
@@ -115,30 +79,35 @@ fn evaluate_command(input: &str) {
     }
 }
 
-pub async fn handle_repl() {
-    let mut line_editor = Reedline::create();
+pub async fn handle_repl() -> rustyline::Result<()> {
+    let mut line_editor = DefaultEditor::new()?;
+    if line_editor.load_history("history.txt").is_err() {
+        debug!("No previous history.");
+    }
+    let time = Local::now().format("%H:%M:%S.%3f").to_string();
+    let prompt = format!("[{}/{}] {}", time,"SHELL", ">>\t");
     register_commands();
 
     loop {
-        let sig = line_editor.read_line(&ZPrompt {
-            left_text: String::new(),
-            right_text: "<<".to_string(),
-        });
-
+        let sig = line_editor.readline(
+            &prompt.bright_white()
+        );
         match sig {
-            Ok(Signal::Success(buffer)) => {
-                if buffer == "exit" {
-                    std::process::exit(0);
-                } else {
-                    evaluate_command(&buffer);
-                }
+            Ok(line) => {
+                line_editor.add_history_entry(line.as_str())?;
+                evaluate_command(line.as_str());
             }
-            Ok(Signal::CtrlC) => {
-                println!("\nCONTROL+C RECEIVED, TERMINATING");
+            Err(rustyline::error::ReadlineError::Interrupted) => {
+                println!("CTRL+C received, exiting...");
                 std::process::exit(0);
             }
-            err => {
-                eprintln!("Error: {:?}", err);
+            Err(rustyline::error::ReadlineError::Eof) => {
+                println!("Error: CTRL+D pressed. Exiting...");
+                std::process::exit(0);
+            }
+            Err(err) => {
+                println!("Error: {}", err);
+                
             }
         }
     }
