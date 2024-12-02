@@ -1,7 +1,33 @@
 use anyhow::Result;
+use colored::Colorize;
 use log2::info;
 
 pub mod core;
+
+pub fn print_splash() {
+    println!(
+        r#"
+         &&&&&&&&&&&         
+      &&&&&&&&&&&&&&&&&      
+    &&&&&&&&&&&&&&&&&&&&&    
+  &&              &&&&&&&&&  
+ &&                &&&&&&&&& 
+&&&&&&&&&&&&      &&&&&&&&&&&
+&&&&&&&&&&&&&    &&&&&&&&&&&&
+&&&&&&&&&&&&&   &&&&&&&&&&&&&
+&&&&&&&&&&&&    &&&&&&&&&&&&&
+&&&&&&&&&&&      &&&&&&&&&&&&
+ &&&&&&&&&                && 
+  &&&&&&&&&              &&  
+    &&&&&&&&&&&&&&&&&&&&&    
+      &&&&&&&&&&&&&&&&&      
+         &&&&&&&&&&&
+
+        Version: {}
+    "#,
+        env!("CARGO_PKG_VERSION").yellow().italic().underline()
+    );
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -9,10 +35,10 @@ async fn main() -> Result<()> {
     info!("Initalizing Engine");
     let shell_thread = tokio::task::spawn(async {
         info!("Shell thread started");
-        core::repl::handle_repl().await;
+        core::repl::repl::handle_repl().await;
     });
 
-    core::splash::print_splash();
+    print_splash();
     info!("Engine Initalized");
     core::init_renderer()?;
     shell_thread.await?;
