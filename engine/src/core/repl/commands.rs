@@ -22,7 +22,7 @@ pub(crate) fn clear() {
     } else {
         dbg!("target_os is unix");
         // "clear" or "tput reset"
-        Command::new("tput").arg("reset").spawn()
+        Command::new("clear").spawn()
     };
 }
 
