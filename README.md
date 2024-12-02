@@ -125,20 +125,20 @@ your platform:
 
 **1**. Clone the repository:
 
-```ps1
+```bash
 git clone https://github.com/Caznix/Zenyx.git
 ```
 
 **2**. cd into the project directory
 
-```PS1
+```bash
 cd ./Zenyx
 ```
 
-**3**. Build the project using the xtask:
+**3**. Build the project 
 
-```ps1
-cargo xtask run core # also use editor for editor, or engine for both
+```bash
+cargo run
 ```
 
 ### macOS
