@@ -21,7 +21,6 @@ pub(crate) fn clear() {
         Command::new("cmd").args(["/c", "cls"]).spawn()
     } else {
         dbg!("target_os is unix");
-        // "clear" or "tput reset"
         Command::new("clear").spawn()
     };
 }
