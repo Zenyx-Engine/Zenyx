@@ -78,5 +78,5 @@ jobs:
     - name: 📦 Upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: Zenyx-${{ runner.os }}-${{ matrix.arch }}-binary
+        name: Zenyx-${{ runner.os }}-${{ matrix.arch }}-bin
         path: target/${{ matrix.target }}/release/zenyx*
