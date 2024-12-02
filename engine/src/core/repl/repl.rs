@@ -1,8 +1,8 @@
 use super::{commands, Callable, COMMAND_LIST};
 use chrono::Local;
+use log::{error, info};
 use reedline::{Prompt, Reedline, Signal};
 use regex::Regex;
-use std::{borrow::Borrow, collections::HashMap, sync::Arc};
 
 fn register_commands() {
     COMMAND_LIST.add_command(
@@ -42,7 +42,7 @@ fn register_commands() {
 
     // EXAMPLE
     // Adding aliases for commands
-    COMMAND_LIST.add_alias("cls".to_string(), "clear".to_string()); // Likely unintended; consider removing or renaming.
+    COMMAND_LIST.add_alias("clear".to_string(), "cls".to_string());
 }
 
 struct ZPrompt {
@@ -97,7 +97,7 @@ fn evaluate_command(input: &str) {
     for command in commands {
         let command = command.trim();
         if command.is_empty() {
-            println!("Empty command, skipping.");
+            info!("Empty command, skipping.");
             continue;
         }
 
@@ -135,11 +135,11 @@ pub async fn handle_repl() {
                 }
             }
             Ok(Signal::CtrlC) => {
-                println!("\nCONTROL+C RECEIVED, TERMINATING");
+                info!("\nCONTROL+C RECEIVED, TERMINATING");
                 std::process::exit(0);
             }
             err => {
-                eprintln!("Error: {:?}", err);
+                error!("Error: {:?}", err);
             }
         }
     }

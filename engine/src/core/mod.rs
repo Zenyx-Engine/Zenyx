@@ -11,4 +11,3 @@ pub fn init_renderer() -> Result<()> {
     let mut app = App::default();
     Ok(event_loop.run_app(&mut app)?)
 }
-

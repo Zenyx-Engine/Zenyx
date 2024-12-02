@@ -1,14 +1,14 @@
 use super::COMMAND_LIST;
+use log::{debug, info};
 use std::process::Command;
-use log2::{debug, info};
 
 pub(crate) fn say_hello() {
-    println!("Hello, World!");
+    info!("Hello, World!");
 }
 
 pub(crate) fn echo(args: Vec<String>) {
     debug!("{}", args.join(" "));
-    println!("{}", args.join(" "))
+    info!("{}", args.join(" "))
 }
 
 pub(crate) fn exit() {

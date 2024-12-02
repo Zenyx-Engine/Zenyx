@@ -2,7 +2,7 @@ pub mod commands;
 pub mod repl;
 
 use lazy_static::lazy_static;
-use log2::{debug, error, info};
+use log::{debug, error, info};
 use parking_lot::RwLock;
 use std::{borrow::Borrow, collections::HashMap, sync::Arc};
 
@@ -88,7 +88,6 @@ impl CommandList {
     }
 
     fn add_alias(&self, name: String, alias: String) {
-        //println!("Input alias: {}", alias);
         if self.aliases.read().contains_key(&alias) {
             error!("Alias: '{}' already exists", alias);
             return;
@@ -121,7 +120,7 @@ impl CommandList {
         if let Some(command) = commands.read().iter().find(|cmd| cmd.name == name) {
             match (command.arg_count, args.as_ref()) {
                 (expected, Some(args_vec)) if args_vec.len() != expected as usize => {
-                    eprintln!(
+                    error!(
                         "Command: '{}' expected {} arguments but received {}",
                         name,
                         expected,

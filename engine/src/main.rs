@@ -1,46 +1,48 @@
 use anyhow::Result;
-use colored::Colorize;
-use log2::info;
+use clap::Parser;
+use log::{info, warn, LevelFilter};
 
 pub mod core;
+pub mod utils;
 
-pub fn print_splash() {
-    println!(
-        r#"
-         &&&&&&&&&&&         
-      &&&&&&&&&&&&&&&&&      
-    &&&&&&&&&&&&&&&&&&&&&    
-  &&              &&&&&&&&&  
- &&                &&&&&&&&& 
-&&&&&&&&&&&&      &&&&&&&&&&&
-&&&&&&&&&&&&&    &&&&&&&&&&&&
-&&&&&&&&&&&&&   &&&&&&&&&&&&&
-&&&&&&&&&&&&    &&&&&&&&&&&&&
-&&&&&&&&&&&      &&&&&&&&&&&&
- &&&&&&&&&                && 
-  &&&&&&&&&              &&  
-    &&&&&&&&&&&&&&&&&&&&&    
-      &&&&&&&&&&&&&&&&&      
-         &&&&&&&&&&&
+use utils::{logger::LOGGER, splash::print_splash};
 
-        Version: {}
-    "#,
-        env!("CARGO_PKG_VERSION").yellow().italic().underline()
-    );
+#[derive(Parser)]
+struct Cli {
+    #[arg(long, short, help = "Enable logging output")]
+    log: bool,
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let _log2 = log2::open("z.log").tee(true).level("debug").start();
-    info!("Initalizing Engine");
-    let shell_thread = tokio::task::spawn(async {
-        info!("Shell thread started");
-        core::repl::repl::handle_repl().await;
-    });
+    let cli = Cli::parse();
+
+    log::set_logger(&*LOGGER).unwrap();
+    log::set_max_level(LevelFilter::Debug);
 
     print_splash();
-    info!("Engine Initalized");
-    core::init_renderer()?;
-    shell_thread.await?;
+
+    if cli.log {
+        info!("Initializing Engine with logging to stdout enabled");
+        warn!("REPL cannot be used with logging enabled due to ReedLine not supporting writing to stdout");
+
+        core::init_renderer()?;
+    } else {
+        LOGGER.write_to_stdout();
+        info!("Initializing Engine with logging to stdout disabled");
+        warn!("REPL cannot be used with logging enabled due to ReedLine not supporting writing to stdout");
+        info!("Writing all logs to file z.log");
+
+        LOGGER.write_to_file("z.log");
+        info!("Logging back to file z.log");
+
+        let shell_thread = tokio::task::spawn(async {
+            core::repl::repl::handle_repl().await;
+        });
+
+        core::init_renderer()?;
+        shell_thread.await?;
+    }
+
     Ok(())
 }
