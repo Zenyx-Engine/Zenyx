@@ -1,12 +1,9 @@
-pub mod commands;
-pub mod repl;
-pub mod splash;
 pub mod renderer;
+pub mod repl;
+
 use anyhow::Result;
 use renderer::App;
 use winit::event_loop::{ControlFlow, EventLoop};
-
-
 
 pub fn init_renderer() -> Result<()> {
     let event_loop = EventLoop::new().unwrap();
@@ -14,3 +11,4 @@ pub fn init_renderer() -> Result<()> {
     let mut app = App::default();
     Ok(event_loop.run_app(&mut app)?)
 }
+
