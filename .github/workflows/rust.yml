@@ -30,6 +30,9 @@ jobs:
           - os: windows-latest
             arch: x86_64
             target: x86_64-pc-windows-msvc
+          - os: windows-latest
+            arch: aarch64
+            target: aarch64-pc-windows-msvc
         exclude:
           - os: windows-latest
             arch: aarch64
