@@ -15,6 +15,8 @@ struct Cli {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    let t = zephyr::add(0, 2);
+    println!("{}", t);
     let cli = Cli::parse();
 
     log::set_logger(&*LOGGER).unwrap();

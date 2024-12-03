@@ -18,3 +18,4 @@ thiserror = "2.0.3"
 tokio = { version = "1.41.1", features = ["macros", "rt", "rt-multi-thread"] }
 wgpu = "23.0.1"
 winit = "0.30.5"
+zephyr.workspace = true

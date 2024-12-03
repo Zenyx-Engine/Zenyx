@@ -1,8 +1,6 @@
 [workspace]
 resolver = "2"
-members = [
-    "engine"
-]
+members = ["engine", "subcrates/zephyr"]
 
 [profile.dev]
 rpath = false
@@ -17,7 +15,7 @@ codegen-units = 512
 strip = "symbols"
 debug-assertions = false
 
-[profile.dev.package."*"]
+[profile.dev.package."*"]   
 opt-level = 0
 debug = false
 overflow-checks = false
@@ -32,3 +30,7 @@ debug = false
 overflow-checks = false
 incremental = true
 codegen-units = 512
+
+[workspace.dependencies]
+anyhow = "1.0.93"
+zephyr = { path = "./subcrates/zephyr" }
