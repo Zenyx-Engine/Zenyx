@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/Logo.svg" alt="Zenyx engine" width="250"/>
+<img src="assets/Logo.svg" alt="Zenyx engine" width="350"/>
 
 ![Version](https://img.shields.io/badge/version-0.1.0-blue)
 ![License](https://img.shields.io/github/license/Caznix/Zenyx)
@@ -146,3 +146,14 @@ cargo run
 ⚠️ as of this current time, we do not have any macOS contributors to write this
 guide, so follow the [General](#building) instructions and try to fill in the
 gaps, you can also ask questions on the [Discord]()
+
+## Press kit
+## Typefaces 
+
+Main typeface
+
+<img src="assets/Logo.png" width="200" alt="Zenyx Typeface">
+
+## Colored badges
+
+<img src="assets/Badge.png" width="100" alt="Zenyx Logo">
