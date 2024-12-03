@@ -10,6 +10,29 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  # Credit to https://github.com/Far-Beyond-Dev/Horizon/blob/main/.github/workflows/main.yml
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+      
+      - name: Check if Cargo.toml version changed
+        id: check
+        run: |
+          CURRENT_VERSION=$(grep -m1 version Cargo.toml | cut -d '"' -f2)
+          git checkout HEAD^1
+          PREVIOUS_VERSION=$(grep -m1 version Cargo.toml | cut -d '"' -f2)
+          if [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ]; then
+            echo "should_release=true" >> $GITHUB_OUTPUT
+            echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "should_release=false" >> $GITHUB_OUTPUT
+          fi
   build:
     strategy:
       fail-fast: false
