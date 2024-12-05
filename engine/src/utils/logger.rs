@@ -1,9 +1,10 @@
-use colored::Colorize;
-use log::{Level, Log, Metadata, Record};
-use once_cell::sync::Lazy;
 use std::fs::OpenOptions;
 use std::io::{self, Write};
 use std::sync::{Arc, Mutex};
+
+use colored::Colorize;
+use log::{Level, Log, Metadata, Record};
+use once_cell::sync::Lazy;
 
 pub static LOGGER: Lazy<DynamicLogger> = Lazy::new(DynamicLogger::new);
 

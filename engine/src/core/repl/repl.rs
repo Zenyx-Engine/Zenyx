@@ -1,7 +1,8 @@
-use crate::{
-    core::repl::{commands, Callable, COMMAND_LIST},
-    utils::logger::LOGGER,
+use std::{
+    borrow::Cow::{self, Borrowed, Owned},
+    sync::{Arc, Mutex},
 };
+
 use anyhow::Result;
 use chrono::Local;
 use colored::Colorize;
@@ -12,9 +13,10 @@ use rustyline::{
     Cmd, Completer, ConditionalEventHandler, Editor, Event, EventContext, EventHandler, Helper,
     Hinter, KeyEvent, RepeatCount, Validator,
 };
-use std::{
-    borrow::Cow::{self, Borrowed, Owned},
-    sync::{Arc, Mutex},
+
+use crate::{
+    core::repl::{commands, Callable, COMMAND_LIST},
+    utils::logger::LOGGER,
 };
 
 #[derive(Completer, Helper, Hinter, Validator)]
@@ -48,7 +50,10 @@ impl ConditionalEventHandler for BacktickEventHandler {
         if let Some(k) = evt.get(0) {
             if *k == KeyEvent::from('`') {
                 let mut state = self.toggle_state.lock().unwrap();
-                println!("Stdout Logging: {}", if *state { "ON".green() } else { "OFF".red() });
+                println!(
+                    "Stdout Logging: {}",
+                    if *state { "ON".green() } else { "OFF".red() }
+                );
                 if *state {
                     LOGGER.write_to_stdout();
                 } else {

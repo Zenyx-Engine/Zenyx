@@ -1,5 +1,6 @@
-use super::COMMAND_LIST;
 use std::process::Command;
+
+use super::COMMAND_LIST;
 
 pub(crate) fn say_hello() {
     println!("Hello, World!");
