@@ -1,4 +1,5 @@
 pub mod ctx;
+pub mod egui;
 use ctx::WgpuCtx;
 
 use log::{debug, trace};

@@ -32,5 +32,4 @@ incremental = true
 codegen-units = 512
 
 [workspace.dependencies]
-anyhow = "1.0.93"
 zephyr = { path = "./subcrates/zephyr" }

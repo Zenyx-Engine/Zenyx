@@ -1,14 +1,18 @@
 use std::sync::Arc;
-
+use egui_wgpu::{wgpu, ScreenDescriptor};
 use anyhow::Result;
 use winit::window::Window;
+
+use super::egui::EguiRenderer;
 
 pub struct WgpuCtx<'window> {
     device: wgpu::Device,
     queue: wgpu::Queue,
     surface: wgpu::Surface<'window>,
     surface_config: wgpu::SurfaceConfiguration,
+    scale_factor: f64,
     adapter: wgpu::Adapter,
+    ui: EguiRenderer
 }
 
 impl<'window> WgpuCtx<'window> {
@@ -44,12 +48,17 @@ impl<'window> WgpuCtx<'window> {
         let surface_config = surface.get_default_config(&adapter, width, height).unwrap();
         surface.configure(&device, &surface_config);
 
+        let egui_renderer = EguiRenderer::new(&device, surface_config.format, None, 1, &window);
+
+        let scale_factor = 1.0;
         Ok(WgpuCtx {
             device,
             queue,
             surface,
             surface_config,
             adapter,
+            scale_factor,
+            ui: egui_renderer
         })
     }
 
