@@ -48,6 +48,7 @@ impl ConditionalEventHandler for BacktickEventHandler {
         if let Some(k) = evt.get(0) {
             if *k == KeyEvent::from('`') {
                 let mut state = self.toggle_state.lock().unwrap();
+                println!("Stdout Logging: {}", if *state { "ON".green() } else { "OFF".red() });
                 if *state {
                     LOGGER.write_to_stdout();
                 } else {
