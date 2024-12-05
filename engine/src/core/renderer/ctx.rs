@@ -41,7 +41,9 @@ impl<'window> WgpuCtx<'window> {
         let width = size.width.max(1);
         let height = size.height.max(1);
 
-        let surface_config = surface.get_default_config(&adapter, width, height).unwrap();
+        let surface_config = surface
+            .get_default_config(&adapter, width, height)
+            .expect("Failed to get default surface configuration");
         surface.configure(&device, &surface_config);
 
         Ok(WgpuCtx {
@@ -55,9 +57,7 @@ impl<'window> WgpuCtx<'window> {
 
     pub fn new_blocking(window: Arc<Window>) -> Result<WgpuCtx<'window>> {
         tokio::task::block_in_place(|| {
-            tokio::runtime::Runtime::new()
-                .unwrap()
-                .block_on(async { WgpuCtx::new(window).await })
+            tokio::runtime::Runtime::new()?.block_on(async { WgpuCtx::new(window).await })
         })
     }
 

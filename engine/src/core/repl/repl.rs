@@ -1,12 +1,13 @@
 use std::{
     borrow::Cow::{self, Borrowed, Owned},
-    sync::{Arc, Mutex},
+    sync::Arc,
 };
 
 use anyhow::Result;
 use chrono::Local;
 use colored::Colorize;
 use log::debug;
+use parking_lot::Mutex;
 use regex::Regex;
 use rustyline::{
     error::ReadlineError, highlight::Highlighter, hint::HistoryHinter, history::DefaultHistory,
@@ -49,7 +50,7 @@ impl ConditionalEventHandler for BacktickEventHandler {
     fn handle(&self, evt: &Event, _: RepeatCount, _: bool, _: &EventContext) -> Option<Cmd> {
         if let Some(k) = evt.get(0) {
             if *k == KeyEvent::from('`') {
-                let mut state = self.toggle_state.lock().unwrap();
+                let mut state = self.toggle_state.lock();
                 println!(
                     "Stdout Logging: {}",
                     if *state { "ON".green() } else { "OFF".red() }

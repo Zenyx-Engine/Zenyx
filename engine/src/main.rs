@@ -1,3 +1,5 @@
+#![deny(clippy::unwrap_in_result)]
+
 use anyhow::Result;
 use log::LevelFilter;
 
@@ -11,7 +13,7 @@ async fn main() -> Result<()> {
     let t = zephyr::add(0, 2);
     println!("{}", t);
 
-    log::set_logger(&*LOGGER).unwrap();
+    log::set_logger(&*LOGGER).ok();
     log::set_max_level(LevelFilter::Debug);
 
     print_splash();

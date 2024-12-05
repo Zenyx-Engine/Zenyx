@@ -1,10 +1,11 @@
 use std::fs::OpenOptions;
 use std::io::{self, Write};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use colored::Colorize;
 use log::{Level, Log, Metadata, Record};
 use once_cell::sync::Lazy;
+use parking_lot::Mutex;
 
 pub static LOGGER: Lazy<DynamicLogger> = Lazy::new(DynamicLogger::new);
 
@@ -28,11 +29,11 @@ impl DynamicLogger {
             .open(file_path)
             .expect("Failed to open log file");
 
-        *self.writer.lock().unwrap() = Box::new(file);
+        *self.writer.lock() = Box::new(file);
     }
 
     pub fn write_to_stdout(&self) {
-        *self.writer.lock().unwrap() = Box::new(io::stdout());
+        *self.writer.lock() = Box::new(io::stdout());
     }
 
     fn colorize_level(level: Level) -> colored::ColoredString {
@@ -58,7 +59,7 @@ impl Log for DynamicLogger {
 
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
-            let mut writer = self.writer.lock().unwrap();
+            let mut writer = self.writer.lock();
             let level = Self::colorize_level(record.level()); // Apply coloring
             writeln!(
                 writer,
@@ -72,7 +73,7 @@ impl Log for DynamicLogger {
     }
 
     fn flush(&self) {
-        let mut writer = self.writer.lock().unwrap();
+        let mut writer = self.writer.lock();
         writer.flush().unwrap();
     }
 }
