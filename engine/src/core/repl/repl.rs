@@ -111,6 +111,32 @@ fn register_commands() {
     COMMAND_LIST.add_alias("clear".to_string(), "cls".to_string());
 }
 
+fn tokenize(command: &str) -> Vec<String> {
+    let mut tokens = Vec::new();
+    let mut current_token = String::new();
+    let mut inside_string = false;
+
+    for char in command.chars() {
+        if char == '"' || char == '\'' {
+            inside_string = !inside_string;
+        } else if char.is_whitespace() && !inside_string {
+            if !current_token.is_empty() {
+                tokens.push(current_token);
+                current_token = String::new();
+            }
+        } else {
+            current_token.push(char);
+        }
+    }
+
+    // ignore the last token if it's empty. Who are we. Mojang? - Caz
+    if !current_token.is_empty() {
+        tokens.push(current_token);
+    }
+
+    tokens
+}
+
 fn evaluate_command(input: &str) {
     if input.trim().is_empty() {
         return;
@@ -126,13 +152,13 @@ fn evaluate_command(input: &str) {
             continue;
         }
 
-        let tokens: Vec<&str> = command.split_whitespace().collect();
+        let tokens = tokenize(command);
         if tokens.is_empty() {
-            return;
+            println!("Empty command, skipping.");
+            continue;
         }
-
-        let cmd_name = tokens[0];
-        let args: Vec<String> = tokens[1..].iter().map(|&s| s.to_string()).collect();
+        let cmd_name = &tokens[0];
+        let args: Vec<String> = tokens[1..].iter().map(|s| s.to_string()).collect();
 
         COMMAND_LIST.execute_command(
             cmd_name.to_string(),
