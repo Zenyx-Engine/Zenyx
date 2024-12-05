@@ -1,6 +1,5 @@
 use super::COMMAND_LIST;
 use std::process::Command;
-use log::debug;
 
 pub(crate) fn say_hello() {
     println!("Hello, World!");
@@ -18,10 +17,8 @@ pub(crate) fn exit() {
 pub(crate) fn clear() {
     println!("Clearing screen..., running command");
     let _result = if cfg!(target_os = "windows") {
-        debug!("target_os is windows");
         Command::new("cmd").args(["/c", "cls"]).spawn()
     } else {
-        debug!("target_os is unix");
         Command::new("clear").spawn()
     };
 }
