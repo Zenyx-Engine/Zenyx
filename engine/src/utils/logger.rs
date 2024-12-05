@@ -47,7 +47,12 @@ impl DynamicLogger {
 
 impl Log for DynamicLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
-        metadata.level() <= Level::Debug
+        let target = metadata.target();
+        let is_relevant_target = target.starts_with("wgpu")
+            || target.starts_with("winit")
+            || target.starts_with(env!("CARGO_PKG_NAME")); // Current crate name
+
+        is_relevant_target && metadata.level() <= Level::Debug
     }
 
     fn log(&self, record: &Record) {
