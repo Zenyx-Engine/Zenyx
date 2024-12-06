@@ -37,7 +37,7 @@ impl Highlighter for MyHelper {
     }
 
     fn highlight_hint<'h>(&self, hint: &'h str) -> Cow<'h, str> {
-        Owned(hint.bold().to_string())
+        Owned(hint.italic().bright_black().to_string())
     }
 }
 
@@ -139,6 +139,7 @@ fn tokenize(command: &str) -> Vec<String> {
 
 fn evaluate_command(input: &str) {
     if input.trim().is_empty() {
+        println!("Empty command, skipping. type 'help' for a list of commands.");
         return;
     }
 

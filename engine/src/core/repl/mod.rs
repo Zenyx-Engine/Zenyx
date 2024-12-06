@@ -3,6 +3,7 @@ pub mod repl;
 
 use std::{borrow::Borrow, collections::HashMap, sync::Arc};
 
+use colored::Colorize;
 use lazy_static::lazy_static;
 use log::{debug, info};
 use parking_lot::RwLock;
@@ -128,6 +129,8 @@ impl CommandList {
                 }
                 (_, _) => command.execute(args),
             }
+        } else {
+            eprintln!("Command: '{}' was not found", name.red().italic());
         }
     }
 }
