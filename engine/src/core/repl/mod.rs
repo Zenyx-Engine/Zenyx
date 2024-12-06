@@ -3,6 +3,7 @@ pub mod repl;
 
 use std::{borrow::Borrow, collections::HashMap, sync::Arc};
 
+use anyhow::Ok;
 use colored::Colorize;
 use lazy_static::lazy_static;
 use log::{debug, info};
@@ -14,8 +15,8 @@ lazy_static! {
 
 #[derive(Clone, Debug)]
 enum Callable {
-    Simple(fn()),
-    WithArgs(fn(Vec<String>)),
+    Simple(fn() -> anyhow::Result<()>),
+    WithArgs(fn(Vec<String>) -> anyhow::Result<()>),
 }
 
 #[derive(Debug)]
@@ -27,7 +28,7 @@ pub struct Command {
 }
 
 impl Command {
-    pub fn execute(&self, args: Option<Vec<String>>) {
+    pub fn execute(&self, args: Option<Vec<String>>) -> anyhow::Result<()> {
         match &self.function {
             Callable::Simple(f) => {
                 if let Some(args) = args {
@@ -36,11 +37,16 @@ impl Command {
                         args.len()
                     );
                 }
-                f()
+                f()?;
+                Ok(())
             }
             Callable::WithArgs(f) => match args {
                 Some(args) => f(args),
-                None => eprintln!("Command expected arguments but received 0"),
+                None => {
+                    Ok(())
+                
+                    
+                },
             },
         }
     }
@@ -50,9 +56,14 @@ impl std::fmt::Display for Command {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "  {:<10} {}",
+            "  {:<10} {}, {}",
             self.name,
-            self.description.unwrap_or("No description available")
+            self.description.unwrap_or("No description available"),
+            if self.arg_count > 0 {
+                format!("{} args", self.arg_count)
+            } else {
+                "No args".to_string()
+            }
         )
     }
 }
@@ -64,9 +75,8 @@ pub struct CommandList {
 
 fn check_similarity(target: &str, strings: &[String]) -> Option<String> {
     strings
-        .iter().filter(|s| {
-            target.chars().zip(s.chars()).any(|(c1, c2)| c1 == c2)
-        })
+        .iter()
+        .filter(|s| target.chars().zip(s.chars()).any(|(c1, c2)| c1 == c2))
         .min_by_key(|s| {
             let mut diff_count = 0;
             for (c1, c2) in target.chars().zip(s.chars()) {
@@ -111,6 +121,7 @@ impl CommandList {
             eprintln!("Alias: '{}' already exists", alias);
             return;
         }
+
         let mut commands = self.commands.write();
         if let Some(command) = commands.iter_mut().find(|cmd| cmd.name == name) {
             debug!("Adding alias: {} for cmd: {}", alias, command.name);
@@ -122,7 +133,7 @@ impl CommandList {
         }
     }
 
-    fn execute_command(&self, mut name: String, args: Option<Vec<String>>) {
+    fn execute_command(&self, mut name: String, args: Option<Vec<String>>) -> anyhow::Result<()> {
         let commands = self.commands.borrow();
         if self.aliases.read().contains_key(&name) {
             name = self
@@ -144,6 +155,7 @@ impl CommandList {
                         expected,
                         args_vec.len()
                     );
+                    Ok(())
                 }
                 (_, _) => command.execute(args),
             }
@@ -161,12 +173,12 @@ impl CommandList {
             );
             match most_similar {
                 Some(similar) => {
-                    eprintln!(
-                        "Did you mean: '{}'?",
-                        similar.green().italic().bold()
-                    );
+                    eprintln!("Did you mean: '{}'?", similar.green().italic().bold());
+                    Ok(())
                 }
-                None => {}
+                None => {
+                    Ok(())
+                }
             }
         }
     }

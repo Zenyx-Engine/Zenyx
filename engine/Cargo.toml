@@ -11,6 +11,7 @@ lazy_static = "1.5.0"
 log = "0.4.22"
 once_cell = "1.20.2"
 parking_lot = "0.12.3"
+rand = "0.8.5"
 regex = "1.11.1"
 rustyline = { version = "15.0.0", features = ["derive", "rustyline-derive"] }
 thiserror = "2.0.3"
@@ -18,3 +19,5 @@ tokio = { version = "1.41.1", features = ["macros", "rt", "rt-multi-thread"] }
 wgpu = "23.0.1"
 winit = "0.30.5"
 zephyr.workspace = true
+plugin_api = { path = "../plugin_api" }
+horizon-plugin-api = "0.1.13"

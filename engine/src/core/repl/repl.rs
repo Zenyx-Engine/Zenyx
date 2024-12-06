@@ -3,7 +3,8 @@ use std::{
     sync::Arc,
 };
 
-use anyhow::Result;
+
+
 use chrono::Local;
 use colored::Colorize;
 use log::debug;
@@ -106,6 +107,12 @@ fn register_commands() {
         Callable::Simple(commands::help),
         None,
     );
+    COMMAND_LIST.add_command(
+        "exec",
+        Some("Executes a .nyx file."),
+        Callable::WithArgs(commands::exec),
+        Some(1), 
+    );
 
     // Example of adding aliases for commands
     COMMAND_LIST.add_alias("clear".to_string(), "cls".to_string());
@@ -137,10 +144,10 @@ fn tokenize(command: &str) -> Vec<String> {
     tokens
 }
 
-fn evaluate_command(input: &str) {
+pub fn evaluate_command(input: &str) -> anyhow::Result<()> {
     if input.trim().is_empty() {
         println!("Empty command, skipping. type 'help' for a list of commands.");
-        return;
+        return Ok(());
     }
 
     let pattern = Regex::new(r"[;|\n]").unwrap();
@@ -164,11 +171,12 @@ fn evaluate_command(input: &str) {
         COMMAND_LIST.execute_command(
             cmd_name.to_string(),
             if args.is_empty() { None } else { Some(args) },
-        );
-    }
+        )?;
+    };
+    Ok(())
 }
 
-pub async fn handle_repl() -> Result<()> {
+pub async fn handle_repl() -> anyhow::Result<()> {
     let mut rl = Editor::<MyHelper, DefaultHistory>::new()?;
     rl.set_helper(Some(MyHelper(HistoryHinter::new())));
 
@@ -193,7 +201,7 @@ pub async fn handle_repl() -> Result<()> {
         match sig {
             Ok(line) => {
                 rl.add_history_entry(line.as_str())?;
-                evaluate_command(line.as_str());
+                evaluate_command(line.as_str())?;
             }
             Err(ReadlineError::Interrupted) => {
                 println!("CTRL+C received, exiting...");
