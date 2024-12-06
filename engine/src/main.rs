@@ -28,10 +28,10 @@ async fn main() -> Result<()> {
 
     LOGGER.write_to_stdout();
 
-    let shell_thread = tokio::task::spawn(async { core::repl::repl::handle_repl().await });
+    let shell_thread = tokio::task::spawn(async { core::repl::exec::handle_repl().await });
 
     core::init_renderer()?;
-    let _ = shell_thread.await??;
+    shell_thread.await??;
 
     Ok(())
 }

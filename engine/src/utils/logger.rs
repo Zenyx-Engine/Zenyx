@@ -14,6 +14,12 @@ pub struct DynamicLogger {
     pub writer: Arc<Mutex<Box<dyn Write + Send>>>,
 }
 
+impl Default for DynamicLogger {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DynamicLogger {
     pub fn new() -> Self {
         Self {
@@ -24,7 +30,7 @@ impl DynamicLogger {
     pub fn write_to_file(&self, file_path: &str) {
         let file = OpenOptions::new()
             .create(true)
-            .write(true)
+            
             .append(true)
             .open(file_path)
             .expect("Failed to open log file");

@@ -4,7 +4,7 @@ use lazy_static::lazy_static;
 use parking_lot::Mutex;
 
 use super::COMMAND_LIST;
-use crate::core::repl::repl::evaluate_command;
+use crate::core::repl::exec::evaluate_command;
 const MAX_RECURSION_DEPTH: usize = 500; // increasing this value WILL cause a stack overflow. attempt at your own risk -
                                         // Caz
 

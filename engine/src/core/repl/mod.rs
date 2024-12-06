@@ -1,5 +1,5 @@
 pub mod commands;
-pub mod repl;
+pub mod exec;
 
 use std::{borrow::Borrow, collections::HashMap, sync::Arc};
 
