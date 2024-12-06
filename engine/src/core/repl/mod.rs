@@ -62,6 +62,24 @@ pub struct CommandList {
     pub aliases: RwLock<HashMap<String, String>>,
 }
 
+fn check_similarity(target: &str, strings: &[String]) -> Option<String> {
+    strings
+        .iter().filter(|s| {
+            target.chars().zip(s.chars()).any(|(c1, c2)| c1 == c2)
+        })
+        .min_by_key(|s| {
+            let mut diff_count = 0;
+            for (c1, c2) in target.chars().zip(s.chars()) {
+                if c1 != c2 {
+                    diff_count += 1;
+                }
+            }
+            diff_count += target.len().abs_diff(s.len());
+            diff_count
+        })
+        .cloned()
+}
+
 impl CommandList {
     fn new() -> Self {
         CommandList {
@@ -131,6 +149,25 @@ impl CommandList {
             }
         } else {
             eprintln!("Command: '{}' was not found", name.red().italic());
+
+            let most_similar = check_similarity(
+                &name,
+                &self
+                    .commands
+                    .read()
+                    .iter()
+                    .map(|cmd| cmd.name.to_string())
+                    .collect::<Vec<String>>(),
+            );
+            match most_similar {
+                Some(similar) => {
+                    eprintln!(
+                        "Did you mean: '{}'?",
+                        similar.green().italic().bold()
+                    );
+                }
+                None => {}
+            }
         }
     }
 }
