@@ -1,14 +1,12 @@
 use std::{ffi::OsStr, process::Command};
 
-
-use parking_lot::Mutex;
 use lazy_static::lazy_static;
-
-
-use crate::core::repl::repl::evaluate_command;
+use parking_lot::Mutex;
 
 use super::COMMAND_LIST;
-const MAX_RECURSION_DEPTH: usize = 500; // increasing this value WILL cause a stack overflow. attempt at your own risk - Caz
+use crate::core::repl::repl::evaluate_command;
+const MAX_RECURSION_DEPTH: usize = 500; // increasing this value WILL cause a stack overflow. attempt at your own risk -
+                                        // Caz
 
 lazy_static! {
     static ref RECURSION_DEPTH: Mutex<usize> = parking_lot::Mutex::new(0);
@@ -59,11 +57,17 @@ pub(crate) fn exec(args: Vec<String>) -> anyhow::Result<()> {
     println!("File path: {:#?}", file_path);
 
     if !file_path.is_file() {
-        eprintln!("Error: File does not exist or is not a valid file: {}", file_path.display());
-        return Ok(()); 
+        eprintln!(
+            "Error: File does not exist or is not a valid file: {}",
+            file_path.display()
+        );
+        return Ok(());
     }
     if file_path.extension() != Some(OsStr::new("zensh")) {
-        eprintln!("Error: File is not a zenshell script: {:#?}", file_path.extension());
+        eprintln!(
+            "Error: File is not a zenshell script: {:#?}",
+            file_path.extension()
+        );
         //TODO: dont panic on this error
         return Ok(());
     }

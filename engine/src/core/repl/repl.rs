@@ -3,8 +3,6 @@ use std::{
     sync::Arc,
 };
 
-
-
 use chrono::Local;
 use colored::Colorize;
 use log::debug;
@@ -111,7 +109,7 @@ fn register_commands() {
         "exec",
         Some("Executes a .nyx file."),
         Callable::WithArgs(commands::exec),
-        Some(1), 
+        Some(1),
     );
 
     // Example of adding aliases for commands
@@ -172,7 +170,7 @@ pub fn evaluate_command(input: &str) -> anyhow::Result<()> {
             cmd_name.to_string(),
             if args.is_empty() { None } else { Some(args) },
         )?;
-    };
+    }
     Ok(())
 }
 

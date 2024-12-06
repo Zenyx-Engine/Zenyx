@@ -3,7 +3,7 @@ pub mod repl;
 
 use std::{borrow::Borrow, collections::HashMap, sync::Arc};
 
-use anyhow::Ok;
+use anyhow::Context;
 use colored::Colorize;
 use lazy_static::lazy_static;
 use log::{debug, info};
@@ -42,11 +42,7 @@ impl Command {
             }
             Callable::WithArgs(f) => match args {
                 Some(args) => f(args),
-                None => {
-                    Ok(())
-                
-                    
-                },
+                None => Ok(()),
             },
         }
     }
@@ -140,7 +136,7 @@ impl CommandList {
                 .aliases
                 .read()
                 .get_key_value(&name)
-                .unwrap()
+                .context("Failed to get alias")?
                 .1
                 .to_string();
 
@@ -176,9 +172,7 @@ impl CommandList {
                     eprintln!("Did you mean: '{}'?", similar.green().italic().bold());
                     Ok(())
                 }
-                None => {
-                    Ok(())
-                }
+                None => Ok(()),
             }
         }
     }
