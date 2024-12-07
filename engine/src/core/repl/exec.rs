@@ -1,20 +1,22 @@
-use crate::{
-    core::repl::{commands, Callable, COMMAND_LIST},
-    utils::logger::LOGGER,
+use std::{
+    borrow::Cow::{self, Borrowed, Owned},
+    sync::Arc,
 };
-use anyhow::Result;
+
 use chrono::Local;
 use colored::Colorize;
 use log::debug;
+use parking_lot::Mutex;
 use regex::Regex;
 use rustyline::{
     error::ReadlineError, highlight::Highlighter, hint::HistoryHinter, history::DefaultHistory,
     Cmd, Completer, ConditionalEventHandler, Editor, Event, EventContext, EventHandler, Helper,
     Hinter, KeyEvent, RepeatCount, Validator,
 };
-use std::{
-    borrow::Cow::{self, Borrowed, Owned},
-    sync::{Arc, Mutex},
+
+use crate::{
+    core::repl::{commands, Callable, COMMAND_LIST},
+    utils::logger::LOGGER,
 };
 
 #[derive(Completer, Helper, Hinter, Validator)]
@@ -34,7 +36,7 @@ impl Highlighter for MyHelper {
     }
 
     fn highlight_hint<'h>(&self, hint: &'h str) -> Cow<'h, str> {
-        Owned(hint.bold().to_string())
+        Owned(hint.italic().bright_black().to_string())
     }
 }
 
@@ -47,7 +49,11 @@ impl ConditionalEventHandler for BacktickEventHandler {
     fn handle(&self, evt: &Event, _: RepeatCount, _: bool, _: &EventContext) -> Option<Cmd> {
         if let Some(k) = evt.get(0) {
             if *k == KeyEvent::from('`') {
-                let mut state = self.toggle_state.lock().unwrap();
+                let mut state = self.toggle_state.lock();
+                println!(
+                    "Stdout Logging: {}",
+                    if *state { "ON".green() } else { "OFF".red() }
+                );
                 if *state {
                     LOGGER.write_to_stdout();
                 } else {
@@ -99,14 +105,47 @@ fn register_commands() {
         Callable::Simple(commands::help),
         None,
     );
+    COMMAND_LIST.add_command(
+        "exec",
+        Some("Executes a .nyx file."),
+        Callable::WithArgs(commands::exec),
+        Some(1),
+    );
 
     // Example of adding aliases for commands
     COMMAND_LIST.add_alias("clear".to_string(), "cls".to_string());
 }
 
-fn evaluate_command(input: &str) {
+fn tokenize(command: &str) -> Vec<String> {
+    let mut tokens = Vec::new();
+    let mut current_token = String::new();
+    let mut inside_string = false;
+
+    for char in command.chars() {
+        if char == '"' || char == '\'' {
+            inside_string = !inside_string;
+        } else if char.is_whitespace() && !inside_string {
+            if !current_token.is_empty() {
+                tokens.push(current_token);
+                current_token = String::new();
+            }
+        } else {
+            current_token.push(char);
+        }
+    }
+
+    // ignore the last token if it's empty. Who are we. Mojang? - Caz
+    if !current_token.is_empty() {
+        tokens.push(current_token);
+    }
+
+    tokens
+}
+
+pub fn evaluate_command(input: &str) -> anyhow::Result<()> {
     if input.trim().is_empty() {
-        return;
+        println!("Empty command, skipping. type 'help' for a list of commands.");
+        return Ok(());
     }
 
     let pattern = Regex::new(r"[;|\n]").unwrap();
@@ -119,22 +158,23 @@ fn evaluate_command(input: &str) {
             continue;
         }
 
-        let tokens: Vec<&str> = command.split_whitespace().collect();
+        let tokens = tokenize(command);
         if tokens.is_empty() {
-            return;
+            println!("Empty command, skipping.");
+            continue;
         }
-
-        let cmd_name = tokens[0];
-        let args: Vec<String> = tokens[1..].iter().map(|&s| s.to_string()).collect();
+        let cmd_name = &tokens[0];
+        let args: Vec<String> = tokens[1..].iter().map(|s| s.to_string()).collect();
 
         COMMAND_LIST.execute_command(
             cmd_name.to_string(),
             if args.is_empty() { None } else { Some(args) },
-        );
+        )?;
     }
+    Ok(())
 }
 
-pub async fn handle_repl() -> Result<()> {
+pub async fn handle_repl() -> anyhow::Result<()> {
     let mut rl = Editor::<MyHelper, DefaultHistory>::new()?;
     rl.set_helper(Some(MyHelper(HistoryHinter::new())));
 
@@ -159,7 +199,7 @@ pub async fn handle_repl() -> Result<()> {
         match sig {
             Ok(line) => {
                 rl.add_history_entry(line.as_str())?;
-                evaluate_command(line.as_str());
+                evaluate_command(line.as_str())?;
             }
             Err(ReadlineError::Interrupted) => {
                 println!("CTRL+C received, exiting...");

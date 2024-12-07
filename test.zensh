@@ -1,0 +1,4 @@
+echo ping
+echo pong
+exec test.zensh
+break

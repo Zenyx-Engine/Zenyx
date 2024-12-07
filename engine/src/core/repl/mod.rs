@@ -1,10 +1,13 @@
 pub mod commands;
-pub mod repl;
+pub mod exec;
 
+use std::{borrow::Borrow, collections::HashMap, sync::Arc};
+
+use anyhow::Context;
+use colored::Colorize;
 use lazy_static::lazy_static;
 use log::{debug, info};
 use parking_lot::RwLock;
-use std::{borrow::Borrow, collections::HashMap, sync::Arc};
 
 lazy_static! {
     pub static ref COMMAND_LIST: Arc<CommandList> = Arc::new(CommandList::new());
@@ -12,8 +15,8 @@ lazy_static! {
 
 #[derive(Clone, Debug)]
 enum Callable {
-    Simple(fn()),
-    WithArgs(fn(Vec<String>)),
+    Simple(fn() -> anyhow::Result<()>),
+    WithArgs(fn(Vec<String>) -> anyhow::Result<()>),
 }
 
 #[derive(Debug)]
@@ -25,7 +28,7 @@ pub struct Command {
 }
 
 impl Command {
-    pub fn execute(&self, args: Option<Vec<String>>) {
+    pub fn execute(&self, args: Option<Vec<String>>) -> anyhow::Result<()> {
         match &self.function {
             Callable::Simple(f) => {
                 if let Some(args) = args {
@@ -34,11 +37,12 @@ impl Command {
                         args.len()
                     );
                 }
-                f()
+                f()?;
+                Ok(())
             }
             Callable::WithArgs(f) => match args {
                 Some(args) => f(args),
-                None => eprintln!("Command expected arguments but received 0"),
+                None => Ok(()),
             },
         }
     }
@@ -48,9 +52,14 @@ impl std::fmt::Display for Command {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "  {:<10} {}",
+            "  {:<10} {}, {}",
             self.name,
-            self.description.unwrap_or("No description available")
+            self.description.unwrap_or("No description available"),
+            if self.arg_count > 0 {
+                format!("{} args", self.arg_count)
+            } else {
+                "No args".to_string()
+            }
         )
     }
 }
@@ -58,6 +67,23 @@ impl std::fmt::Display for Command {
 pub struct CommandList {
     pub commands: RwLock<Vec<Command>>,
     pub aliases: RwLock<HashMap<String, String>>,
+}
+
+fn check_similarity(target: &str, strings: &[String]) -> Option<String> {
+    strings
+        .iter()
+        .filter(|s| target.chars().zip(s.chars()).any(|(c1, c2)| c1 == c2))
+        .min_by_key(|s| {
+            let mut diff_count = 0;
+            for (c1, c2) in target.chars().zip(s.chars()) {
+                if c1 != c2 {
+                    diff_count += 1;
+                }
+            }
+            diff_count += target.len().abs_diff(s.len());
+            diff_count
+        })
+        .cloned()
 }
 
 impl CommandList {
@@ -91,6 +117,7 @@ impl CommandList {
             eprintln!("Alias: '{}' already exists", alias);
             return;
         }
+
         let mut commands = self.commands.write();
         if let Some(command) = commands.iter_mut().find(|cmd| cmd.name == name) {
             debug!("Adding alias: {} for cmd: {}", alias, command.name);
@@ -102,14 +129,14 @@ impl CommandList {
         }
     }
 
-    fn execute_command(&self, mut name: String, args: Option<Vec<String>>) {
+    fn execute_command(&self, mut name: String, args: Option<Vec<String>>) -> anyhow::Result<()> {
         let commands = self.commands.borrow();
         if self.aliases.read().contains_key(&name) {
             name = self
                 .aliases
                 .read()
                 .get_key_value(&name)
-                .unwrap()
+                .context("Failed to get alias")?
                 .1
                 .to_string();
 
@@ -124,8 +151,28 @@ impl CommandList {
                         expected,
                         args_vec.len()
                     );
+                    Ok(())
                 }
                 (_, _) => command.execute(args),
+            }
+        } else {
+            eprintln!("Command: '{}' was not found", name.red().italic());
+
+            let most_similar = check_similarity(
+                &name,
+                &self
+                    .commands
+                    .read()
+                    .iter()
+                    .map(|cmd| cmd.name.to_string())
+                    .collect::<Vec<String>>(),
+            );
+            match most_similar {
+                Some(similar) => {
+                    eprintln!("Did you mean: '{}'?", similar.green().italic().bold());
+                    Ok(())
+                }
+                None => Ok(()),
             }
         }
     }

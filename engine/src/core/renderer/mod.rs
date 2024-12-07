@@ -1,8 +1,8 @@
 pub mod ctx;
-use ctx::WgpuCtx;
-
-use log::{debug, trace};
 use std::sync::Arc;
+
+use ctx::WgpuCtx;
+use log::{debug, trace};
 use winit::application::ApplicationHandler;
 use winit::event::WindowEvent;
 use winit::event_loop::ActiveEventLoop;

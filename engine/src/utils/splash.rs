@@ -1,8 +1,7 @@
 use colored::Colorize;
-use log::info;
 
 pub fn print_splash() {
-    info!(
+    println!(
         "{}",
         format!(
             r#"
