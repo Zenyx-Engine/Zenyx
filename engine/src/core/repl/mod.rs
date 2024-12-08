@@ -106,14 +106,13 @@ fn edit_distance(a: &str, b: &str) -> usize {
     for i in 0..=m {
         for j in 0..=n {
             if i == 0 {
-                dp[i][j] = j; // Insertions
+                dp[i][j] = j; 
             } else if j == 0 {
-                dp[i][j] = i; // Deletions
+                dp[i][j] = i; 
             } else if a.chars().nth(i - 1) == b.chars().nth(j - 1) {
-                dp[i][j] = dp[i - 1][j - 1]; // No change
+                dp[i][j] = dp[i - 1][j - 1]; 
             } else {
                 dp[i][j] = 1 + dp[i - 1][j - 1].min(dp[i - 1][j]).min(dp[i][j - 1]);
-                // Substitute, delete, or insert
             }
         }
     }
@@ -128,14 +127,12 @@ fn check_similarity(target: &str, strings: &[String]) -> Option<String> {
     let mut best_distance = usize::MAX;
 
     for s in strings {
-        // Use Hamming distance if lengths are equal.
         if let Some(hamming_dist) = hamming_distance(target, s) {
             if hamming_dist <= max_hamming_distance && hamming_dist < best_distance {
                 best_distance = hamming_dist;
                 best_match = Some(s.clone());
             }
         } else {
-            // Otherwise, fallback to edit distance.
             let edit_dist = edit_distance(target, s);
             if edit_dist <= max_edit_distance && edit_dist < best_distance {
                 best_distance = edit_dist;
