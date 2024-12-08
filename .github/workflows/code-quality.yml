@@ -1,0 +1,43 @@
+name: Code Quality
+
+on: [push, pull_request]
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+        components: clippy, rustfmt
+    
+    - name: Check formatting
+      run: |
+        if ! cargo fmt -- --check; then
+          echo "::warning::Formatting check failed. Run 'cargo fmt' to fix."
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            exit 1
+          fi
+        fi
+    
+    - name: Run Clippy
+      run: |
+        if ! cargo clippy -- -D warnings; then
+          echo "::warning::Clippy found warnings. Address these before merging."
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            exit 1
+          fi
+        fi
+    
+    - name: Compilation Check
+      run: |
+        if ! cargo check; then
+          echo "::error::Compilation failed."
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            exit 1
+          fi
+        fi
