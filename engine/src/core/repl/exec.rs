@@ -3,6 +3,7 @@ use std::{
     sync::Arc,
 };
 
+
 use chrono::Local;
 use colored::Colorize;
 use log::debug;
@@ -142,6 +143,12 @@ fn tokenize(command: &str) -> Vec<String> {
     tokens
 }
 
+
+pub fn parse_command(input: &str) -> anyhow::Result<Vec<String>> {
+    let pattern = Regex::new(r"[;|\n]").unwrap();
+    let commands: Vec<String> = pattern.split(input).map(|s| String::from(s)).collect();
+    Ok(commands)
+}
 pub fn evaluate_command(input: &str) -> anyhow::Result<()> {
     if input.trim().is_empty() {
         println!("Empty command, skipping. type 'help' for a list of commands.");

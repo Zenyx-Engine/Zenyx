@@ -1,4 +1,11 @@
-echo ping
-echo pong
-exec test.zensh
-break
+
+
+
+
+
+
+
+
+
+echo "Hello World"
+echo "hello world"; hello

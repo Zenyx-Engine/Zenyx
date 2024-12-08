@@ -9,6 +9,9 @@ use lazy_static::lazy_static;
 use log::{debug, info};
 use parking_lot::RwLock;
 
+static mut REPL_ENABLED: bool = true;
+
+
 lazy_static! {
     pub static ref COMMAND_LIST: Arc<CommandList> = Arc::new(CommandList::new());
 }
@@ -28,6 +31,19 @@ pub struct Command {
 }
 
 impl Command {
+    pub fn new(
+        name: &'static str,
+        description: Option<&'static str>,
+        function: Callable,
+        arg_count: Option<u8>,
+    ) -> Self {
+        Command {
+            name,
+            description,
+            function,
+            arg_count: arg_count.unwrap_or(0),
+        }
+    }
     pub fn execute(&self, args: Option<Vec<String>>) -> anyhow::Result<()> {
         match &self.function {
             Callable::Simple(f) => {
@@ -69,21 +85,69 @@ pub struct CommandList {
     pub aliases: RwLock<HashMap<String, String>>,
 }
 
-fn check_similarity(target: &str, strings: &[String]) -> Option<String> {
-    strings
-        .iter()
-        .filter(|s| target.chars().zip(s.chars()).any(|(c1, c2)| c1 == c2))
-        .min_by_key(|s| {
-            let mut diff_count = 0;
-            for (c1, c2) in target.chars().zip(s.chars()) {
-                if c1 != c2 {
-                    diff_count += 1;
-                }
+fn hamming_distance(a: &str, b: &str) -> Option<usize> {
+    if a.len() != b.len() {
+        return None;
+    }
+    Some(
+        a.chars()
+            .zip(b.chars())
+            .filter(|(char_a, char_b)| char_a != char_b)
+            .count(),
+    )
+}
+
+fn edit_distance(a: &str, b: &str) -> usize {
+    let m = a.len();
+    let n = b.len();
+
+    let mut dp = vec![vec![0; n + 1]; m + 1];
+
+    for i in 0..=m {
+        for j in 0..=n {
+            if i == 0 {
+                dp[i][j] = j; // Insertions
+            } else if j == 0 {
+                dp[i][j] = i; // Deletions
+            } else if a.chars().nth(i - 1) == b.chars().nth(j - 1) {
+                dp[i][j] = dp[i - 1][j - 1]; // No change
+            } else {
+                dp[i][j] = 1 + dp[i - 1][j - 1].min(dp[i - 1][j]).min(dp[i][j - 1]); // Substitute, delete, or insert
             }
-            diff_count += target.len().abs_diff(s.len());
-            diff_count
-        })
-        .cloned()
+        }
+    }
+
+    dp[m][n]
+}
+
+
+fn check_similarity(
+    target: &str,
+    strings: &[String],
+) -> Option<String> {
+    let    max_hamming_distance: usize = 2;
+    let    max_edit_distance: usize = 2;
+    let mut best_match: Option<String> = None;
+    let mut best_distance = usize::MAX;
+
+    for s in strings {
+        // Use Hamming distance if lengths are equal.
+        if let Some(hamming_dist) = hamming_distance(target, s) {
+            if hamming_dist <= max_hamming_distance && hamming_dist < best_distance {
+                best_distance = hamming_dist;
+                best_match = Some(s.clone());
+            }
+        } else {
+            // Otherwise, fallback to edit distance.
+            let edit_dist = edit_distance(target, s);
+            if edit_dist <= max_edit_distance && edit_dist < best_distance {
+                best_distance = edit_dist;
+                best_match = Some(s.clone());
+            }
+        }
+    }
+
+    best_match
 }
 
 impl CommandList {
