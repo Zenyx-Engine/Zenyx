@@ -18,19 +18,21 @@ jobs:
     - name: Check formatting
       run: |
         if ! cargo fmt -- --check; then
-          echo "::warning::Formatting check failed. Run 'cargo fmt' to fix."
+          echo "::error::Formatting check failed. Run 'cargo fmt' to fix."
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             exit 1
           fi
+          exit 0
         fi
     
     - name: Run Clippy
       run: |
         if ! cargo clippy -- -D warnings; then
-          echo "::warning::Clippy found warnings. Address these before merging."
+          echo "::error::Clippy found warnings. Address these before merging."
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             exit 1
           fi
+          exit 0
         fi
     
     - name: Compilation Check
@@ -40,4 +42,5 @@ jobs:
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             exit 1
           fi
+          exit 0
         fi
