@@ -35,7 +35,6 @@ impl Completer for CommandCompleter {
         pos: usize,
         _ctx: &rustyline::Context<'_>,
     ) -> rustyline::Result<(usize, Vec<Self::Candidate>)> {
-
         let binding = COMMAND_LIST.commands.read();
         let filtered_commands: Vec<_> = binding
             .iter()

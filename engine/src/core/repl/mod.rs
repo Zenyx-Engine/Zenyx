@@ -9,8 +9,6 @@ use lazy_static::lazy_static;
 use log::{debug, info};
 use parking_lot::RwLock;
 
-
-
 lazy_static! {
     pub static ref COMMAND_LIST: Arc<CommandList> = Arc::new(CommandList::new());
 }
@@ -202,7 +200,6 @@ impl CommandList {
         }
         if let Some(command) = commands.read().iter().find(|cmd| cmd.name == name) {
             match (command.arg_count, args.as_ref()) {
-                
                 (expected, Some(args_vec)) if args_vec.len() != expected as usize => {
                     eprintln!(
                         "Command: '{}' expected {} arguments but received {}",
@@ -215,8 +212,7 @@ impl CommandList {
                 (expected, None) => {
                     eprintln!(
                         "Command: '{}' expected {} arguments but received none",
-                        name,
-                        expected
+                        name, expected
                     );
                     Ok(())
                 }
@@ -242,7 +238,7 @@ impl CommandList {
                 None => {
                     println!("Type 'help' for a list of commands");
                     Ok(())
-                },
+                }
             }
         }
     }
