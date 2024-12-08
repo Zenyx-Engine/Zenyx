@@ -5,8 +5,9 @@ use parking_lot::Mutex;
 
 use super::COMMAND_LIST;
 use crate::core::repl::exec::evaluate_command;
-const MAX_RECURSION_DEPTH: usize = 500; // increasing this value WILL cause a stack overflow. attempt at your own risk -
-                                        // Caz
+// increasing this value WILL cause a stack overflow
+// attempt at your own risk - Caz
+const MAX_RECURSION_DEPTH: usize = 500;
 
 lazy_static! {
     static ref RECURSION_DEPTH: Mutex<usize> = parking_lot::Mutex::new(0);

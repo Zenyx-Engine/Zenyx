@@ -1,7 +1,6 @@
 use std::{
     borrow::Cow::{self, Borrowed, Owned},
     sync::Arc,
-    vec,
 };
 
 use chrono::Local;
@@ -34,27 +33,21 @@ impl Completer for CommandCompleter {
         &self,
         line: &str,
         pos: usize,
-        ctx: &rustyline::Context<'_>,
+        _ctx: &rustyline::Context<'_>,
     ) -> rustyline::Result<(usize, Vec<Self::Candidate>)> {
-        let mut candidates: Vec<String> = vec![];
+
         let binding = COMMAND_LIST.commands.read();
         let filtered_commands: Vec<_> = binding
-        .iter()
-        .filter(|command| command.name.starts_with(line))
-        .collect();
+            .iter()
+            .filter(|command| command.name.starts_with(line))
+            .collect();
 
         let completions: Vec<String> = filtered_commands
-        .iter()
-        .filter(|command| {
-
-            command.name.starts_with(&line[..pos])
-        })
-        .map(|command| {
-
-            command.name[pos..].to_string()
-        })
-        .collect();
-    Ok((pos, completions))
+            .iter()
+            .filter(|command| command.name.starts_with(&line[..pos]))
+            .map(|command| command.name[pos..].to_string())
+            .collect();
+        Ok((pos, completions))
     }
 }
 

@@ -9,7 +9,7 @@ use lazy_static::lazy_static;
 use log::{debug, info};
 use parking_lot::RwLock;
 
-static mut REPL_ENABLED: bool = true;
+
 
 lazy_static! {
     pub static ref COMMAND_LIST: Arc<CommandList> = Arc::new(CommandList::new());
@@ -28,7 +28,7 @@ pub struct Command {
     function: Callable,
     pub arg_count: u8,
 }
-
+#[allow(private_interfaces)]
 impl Command {
     pub fn new(
         name: &'static str,
@@ -106,11 +106,11 @@ fn edit_distance(a: &str, b: &str) -> usize {
     for i in 0..=m {
         for j in 0..=n {
             if i == 0 {
-                dp[i][j] = j; 
+                dp[i][j] = j;
             } else if j == 0 {
-                dp[i][j] = i; 
+                dp[i][j] = i;
             } else if a.chars().nth(i - 1) == b.chars().nth(j - 1) {
-                dp[i][j] = dp[i - 1][j - 1]; 
+                dp[i][j] = dp[i - 1][j - 1];
             } else {
                 dp[i][j] = 1 + dp[i - 1][j - 1].min(dp[i - 1][j]).min(dp[i][j - 1]);
             }
