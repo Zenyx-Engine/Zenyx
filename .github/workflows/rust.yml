@@ -1,16 +1,42 @@
 name: Build Zenyx ⚡
-
 on:
   push:
     branches: [ "main", "master" ]
   pull_request:
     branches: [ "main", "master" ]
-
 env:
   CARGO_TERM_COLOR: always
-
 jobs:
-  # Credit to https://github.com/Far-Beyond-Dev/Horizon/blob/main/.github/workflows/main.yml
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+        components: clippy, rustfmt
+    
+    - name: Check formatting
+      run: |
+        if ! cargo fmt -- --check; then
+          echo "Formatting check failed. Run 'cargo fmt' to fix."
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            exit 1
+          fi
+        fi
+    
+    - name: Run Clippy
+      run: |
+        if ! cargo clippy -- -D warnings; then
+          echo "Clippy found warnings. Address these before merging."
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            exit 1
+          fi
+        fi
+
   check-version:
     runs-on: ubuntu-latest
     outputs:
@@ -20,7 +46,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 2
-      
+     
       - name: Check if Cargo.toml version changed
         id: check
         run: |
@@ -33,7 +59,9 @@ jobs:
           else
             echo "should_release=false" >> $GITHUB_OUTPUT
           fi
+
   build:
+    needs: [code-quality, check-version]
     strategy:
       fail-fast: false
       matrix:
@@ -57,22 +85,20 @@ jobs:
           - os: windows-latest
             arch: aarch64
     runs-on: ${{ matrix.os }}
-
     steps:
     - name: 📥 Clone repository
       uses: actions/checkout@v3
-    
+   
     - name: 🛠️ Install cross-compilation dependencies (Ubuntu)
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
         sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu qemu-user
-
-    - name: 🛠️ Install cross-compilation dependencies (macOS🍎) 
+    - name: 🛠️ Install cross-compilation dependencies (macOS🍎)
       if: runner.os == 'macOS'
       run: |
         brew install FiloSottile/musl-cross/musl-cross
-        
+       
     - name: 🔧 Install Rust
       uses: actions-rs/toolchain@v1
       with:
@@ -80,7 +106,7 @@ jobs:
         override: true
         target: ${{ matrix.target }}
         profile: minimal
-    
+   
     - name: 🏗️ Build
       uses: actions-rs/cargo@v1
       with:
@@ -88,7 +114,7 @@ jobs:
         args: --release --target ${{ matrix.target }}
       env:
         CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
-      
+     
     - name: 🧪 Run tests
       uses: actions-rs/cargo@v1
       with:
@@ -97,7 +123,6 @@ jobs:
       env:
         CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
         QEMU_LD_PREFIX: /usr/aarch64-linux-gnu
-
     - name: 📦 Upload artifacts
       uses: actions/upload-artifact@v3
       with:
