@@ -1,5 +1,5 @@
 #![deny(clippy::unwrap_in_result)]
-
+#![feature(iter_collect_into)]
 use anyhow::Result;
 use log::LevelFilter;
 use plugin_api::plugin_imports::*;

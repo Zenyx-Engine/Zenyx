@@ -1,6 +1,7 @@
 use std::{
     borrow::Cow::{self, Borrowed, Owned},
     sync::Arc,
+    vec,
 };
 
 use chrono::Local;
@@ -9,9 +10,9 @@ use log::debug;
 use parking_lot::Mutex;
 use regex::Regex;
 use rustyline::{
-    error::ReadlineError, highlight::Highlighter, hint::HistoryHinter, history::DefaultHistory,
-    Cmd, Completer, ConditionalEventHandler, Editor, Event, EventContext, EventHandler, Helper,
-    Hinter, KeyEvent, RepeatCount, Validator,
+    completion::Completer, error::ReadlineError, highlight::Highlighter, hint::HistoryHinter,
+    history::DefaultHistory, Cmd, Completer, ConditionalEventHandler, Editor, Event, EventContext,
+    EventHandler, Helper, Hinter, KeyEvent, RepeatCount, Validator,
 };
 
 use crate::{
@@ -19,8 +20,51 @@ use crate::{
     utils::logger::LOGGER,
 };
 
+struct CommandCompleter;
+impl CommandCompleter {
+    fn new() -> Self {
+        CommandCompleter {}
+    }
+}
+
+impl Completer for CommandCompleter {
+    type Candidate = String;
+
+    fn complete(
+        &self,
+        line: &str,
+        pos: usize,
+        ctx: &rustyline::Context<'_>,
+    ) -> rustyline::Result<(usize, Vec<Self::Candidate>)> {
+        let mut candidates: Vec<String> = vec![];
+        let binding = COMMAND_LIST.commands.read();
+        let filtered_commands: Vec<_> = binding
+        .iter()
+        .filter(|command| command.name.starts_with(line))
+        .collect();
+
+        let completions: Vec<String> = filtered_commands
+        .iter()
+        .filter(|command| {
+
+            command.name.starts_with(&line[..pos])
+        })
+        .map(|command| {
+
+            command.name[pos..].to_string()
+        })
+        .collect();
+    Ok((pos, completions))
+    }
+}
+
 #[derive(Completer, Helper, Hinter, Validator)]
-struct MyHelper(#[rustyline(Hinter)] HistoryHinter);
+struct MyHelper {
+    #[rustyline(Hinter)]
+    hinter: HistoryHinter,
+    #[rustyline(Completer)]
+    completer: CommandCompleter,
+}
 
 impl Highlighter for MyHelper {
     fn highlight_prompt<'b, 's: 'b, 'p: 'b>(
@@ -181,7 +225,10 @@ pub fn evaluate_command(input: &str) -> anyhow::Result<()> {
 
 pub async fn handle_repl() -> anyhow::Result<()> {
     let mut rl = Editor::<MyHelper, DefaultHistory>::new()?;
-    rl.set_helper(Some(MyHelper(HistoryHinter::new())));
+    rl.set_helper(Some(MyHelper {
+        hinter: HistoryHinter::new(),
+        completer: CommandCompleter::new(),
+    }));
 
     rl.bind_sequence(
         KeyEvent::from('`'),
