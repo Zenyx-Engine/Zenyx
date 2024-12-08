@@ -11,36 +11,15 @@ jobs:
     - name: Install Rust
       uses: actions-rs/toolchain@v1
       with:
-        toolchain: nightly
+        toolchain: stable
         override: true
         components: clippy, rustfmt
     
     - name: Check formatting
-      run: |
-        if ! cargo fmt -- --check; then
-          echo "::error::Formatting check failed. Run 'cargo fmt' to fix."
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            exit 1
-          fi
-          exit 0
-        fi
+      run: cargo fmt -- --check
     
     - name: Run Clippy
-      run: |
-        if ! cargo clippy -- -D warnings; then
-          echo "::error::Clippy found warnings. Address these before merging."
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            exit 1
-          fi
-          exit 0
-        fi
+      run: cargo clippy -- -D warnings
     
     - name: Compilation Check
-      run: |
-        if ! cargo check; then
-          echo "::error::Compilation failed."
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            exit 1
-          fi
-          exit 0
-        fi
+      run: cargo check
