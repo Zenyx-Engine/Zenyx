@@ -202,12 +202,21 @@ impl CommandList {
         }
         if let Some(command) = commands.read().iter().find(|cmd| cmd.name == name) {
             match (command.arg_count, args.as_ref()) {
+                
                 (expected, Some(args_vec)) if args_vec.len() != expected as usize => {
                     eprintln!(
                         "Command: '{}' expected {} arguments but received {}",
                         name,
                         expected,
                         args_vec.len()
+                    );
+                    Ok(())
+                }
+                (expected, None) => {
+                    eprintln!(
+                        "Command: '{}' expected {} arguments but received none",
+                        name,
+                        expected
                     );
                     Ok(())
                 }
@@ -230,7 +239,10 @@ impl CommandList {
                     eprintln!("Did you mean: '{}'?", similar.green().italic().bold());
                     Ok(())
                 }
-                None => Ok(()),
+                None => {
+                    println!("Type 'help' for a list of commands");
+                    Ok(())
+                },
             }
         }
     }
