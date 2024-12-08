@@ -3,7 +3,6 @@ use std::{
     sync::Arc,
 };
 
-
 use chrono::Local;
 use colored::Colorize;
 use log::debug;
@@ -142,7 +141,6 @@ fn tokenize(command: &str) -> Vec<String> {
 
     tokens
 }
-
 
 pub fn parse_command(input: &str) -> anyhow::Result<Vec<String>> {
     let pattern = Regex::new(r"[;|\n]").unwrap();

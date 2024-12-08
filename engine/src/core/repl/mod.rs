@@ -11,7 +11,6 @@ use parking_lot::RwLock;
 
 static mut REPL_ENABLED: bool = true;
 
-
 lazy_static! {
     pub static ref COMMAND_LIST: Arc<CommandList> = Arc::new(CommandList::new());
 }
@@ -44,6 +43,7 @@ impl Command {
             arg_count: arg_count.unwrap_or(0),
         }
     }
+
     pub fn execute(&self, args: Option<Vec<String>>) -> anyhow::Result<()> {
         match &self.function {
             Callable::Simple(f) => {
@@ -112,7 +112,8 @@ fn edit_distance(a: &str, b: &str) -> usize {
             } else if a.chars().nth(i - 1) == b.chars().nth(j - 1) {
                 dp[i][j] = dp[i - 1][j - 1]; // No change
             } else {
-                dp[i][j] = 1 + dp[i - 1][j - 1].min(dp[i - 1][j]).min(dp[i][j - 1]); // Substitute, delete, or insert
+                dp[i][j] = 1 + dp[i - 1][j - 1].min(dp[i - 1][j]).min(dp[i][j - 1]);
+                // Substitute, delete, or insert
             }
         }
     }
@@ -120,13 +121,9 @@ fn edit_distance(a: &str, b: &str) -> usize {
     dp[m][n]
 }
 
-
-fn check_similarity(
-    target: &str,
-    strings: &[String],
-) -> Option<String> {
-    let    max_hamming_distance: usize = 2;
-    let    max_edit_distance: usize = 2;
+fn check_similarity(target: &str, strings: &[String]) -> Option<String> {
+    let max_hamming_distance: usize = 2;
+    let max_edit_distance: usize = 2;
     let mut best_match: Option<String> = None;
     let mut best_distance = usize::MAX;
 
