@@ -15,7 +15,7 @@ async-trait = "0.1.83"
 tokio = { version = "1.42.0", features = ["rt", "net", "rt-multi-thread"] }
 uuid = "1.11.0"
 socketioxide = "0.15.0"
-horizon-plugin-api = "0.1.11"
+horizon-plugin-api = "0.2.0"
 #
 #
 #
