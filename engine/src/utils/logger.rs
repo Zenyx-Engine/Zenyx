@@ -30,7 +30,6 @@ impl DynamicLogger {
     pub fn write_to_file(&self, file_path: &str) {
         let file = OpenOptions::new()
             .create(true)
-            
             .append(true)
             .open(file_path)
             .expect("Failed to open log file");
