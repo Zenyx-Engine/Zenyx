@@ -9,15 +9,13 @@ use log::debug;
 use parking_lot::Mutex;
 use regex::Regex;
 use rustyline::{
-    completion::Completer, error::ReadlineError, highlight::Highlighter, hint::HistoryHinter,
-    history::DefaultHistory, Cmd, Completer, ConditionalEventHandler, Editor, Event, EventContext,
-    EventHandler, Helper, Hinter, KeyEvent, RepeatCount, Validator,
+    Cmd, Completer, ConditionalEventHandler, Editor, Event, EventContext, EventHandler, Helper,
+    Hinter, KeyEvent, RepeatCount, Validator, completion::Completer, error::ReadlineError,
+    highlight::Highlighter, hint::HistoryHinter, history::DefaultHistory,
 };
 
-use crate::{
-    core::repl::{commands, Callable, COMMAND_LIST},
-    utils::logger::LOGGER,
-};
+use super::handler::COMMAND_MANAGER;
+use crate::core::logger::LOGGER;
 
 struct CommandCompleter;
 impl CommandCompleter {
@@ -35,21 +33,21 @@ impl Completer for CommandCompleter {
         pos: usize,
         _ctx: &rustyline::Context<'_>,
     ) -> rustyline::Result<(usize, Vec<Self::Candidate>)> {
-        let binding = COMMAND_LIST.commands.read();
+        let binding = COMMAND_MANAGER.read();
+        let binding = binding.get_commands();
         let filtered_commands: Vec<_> = binding
-            .iter()
-            .filter(|command| command.name.starts_with(line))
+            .filter(|(command, _)| command.starts_with(line))
             .collect();
 
         let completions: Vec<String> = filtered_commands
             .iter()
-            .filter(|command| command.name.starts_with(&line[..pos]))
-            .map(|command| command.name[pos..].to_string())
+            .filter(|(command, _)| command.starts_with(&line[..pos]))
+            .map(|(command, _)| command[pos..].to_string())
             .collect();
+        println!("{:#?}", completions);
         Ok((pos, completions))
     }
 }
-
 #[derive(Completer, Helper, Hinter, Validator)]
 struct MyHelper {
     #[rustyline(Hinter)]
@@ -106,53 +104,7 @@ impl ConditionalEventHandler for BacktickEventHandler {
     }
 }
 
-fn register_commands() {
-    COMMAND_LIST.add_command(
-        "hello",
-        Some("Displays \"Hello World\"!"),
-        Callable::Simple(commands::say_hello),
-        None,
-    );
-
-    COMMAND_LIST.add_command(
-        "exit",
-        Some("Exits the application gracefully."),
-        Callable::Simple(commands::exit),
-        None,
-    );
-
-    COMMAND_LIST.add_command(
-        "clear",
-        Some("Clears the terminal screen."),
-        Callable::Simple(commands::clear),
-        None,
-    );
-
-    COMMAND_LIST.add_command(
-        "echo",
-        Some("Prints the provided arguments back to the terminal."),
-        Callable::WithArgs(commands::echo),
-        Some(1), // Requires at least one argument
-    );
-
-    COMMAND_LIST.add_command(
-        "help",
-        Some("Displays a list of all available commands."),
-        Callable::Simple(commands::help),
-        None,
-    );
-    COMMAND_LIST.add_command(
-        "exec",
-        Some("Executes a .nyx file."),
-        Callable::WithArgs(commands::exec),
-        Some(1),
-    );
-
-    // Example of adding aliases for commands
-    COMMAND_LIST.add_alias("clear".to_string(), "cls".to_string());
-}
-
-fn tokenize(command: &str) -> Vec<String> {
+pub fn tokenize(command: &str) -> Vec<String> {
     let mut tokens = Vec::new();
     let mut current_token = String::new();
     let mut inside_string = false;
@@ -180,12 +132,11 @@ fn tokenize(command: &str) -> Vec<String> {
 
 pub fn parse_command(input: &str) -> anyhow::Result<Vec<String>> {
     let pattern = Regex::new(r"[;|\n]").unwrap();
-    let commands: Vec<String> = pattern.split(input).map(|s| String::from(s)).collect();
+    let commands: Vec<String> = pattern.split(input).map(String::from).collect();
     Ok(commands)
 }
 pub fn evaluate_command(input: &str) -> anyhow::Result<()> {
     if input.trim().is_empty() {
-        println!("Empty command, skipping. type 'help' for a list of commands.");
         return Ok(());
     }
 
@@ -205,12 +156,15 @@ pub fn evaluate_command(input: &str) -> anyhow::Result<()> {
             continue;
         }
         let cmd_name = &tokens[0];
-        let args: Vec<String> = tokens[1..].iter().map(|s| s.to_string()).collect();
-
-        COMMAND_LIST.execute_command(
-            cmd_name.to_string(),
-            if args.is_empty() { None } else { Some(args) },
-        )?;
+        let args: Option<Vec<String>> = if tokens.len() > 1 {
+            Some(tokens[1..].iter().map(|s| s.to_string()).collect())
+        } else {
+            None
+        };
+            match COMMAND_MANAGER.read().execute(cmd_name, args) {
+                Ok(_) => continue,
+                Err(e) => return Err(e)
+            }
     }
     Ok(())
 }
@@ -233,8 +187,6 @@ pub async fn handle_repl() -> anyhow::Result<()> {
         debug!("No previous history.");
     }
 
-    register_commands();
-
     loop {
         let time = Local::now().format("%H:%M:%S.%3f").to_string();
         let prompt = format!("[{}/{}] {}", time, "SHELL", ">>\t");
@@ -243,7 +195,10 @@ pub async fn handle_repl() -> anyhow::Result<()> {
         match sig {
             Ok(line) => {
                 rl.add_history_entry(line.as_str())?;
-                evaluate_command(line.as_str())?;
+                match evaluate_command(line.as_str()) {
+                    Ok(_) => continue,
+                    Err(e) => println!("{e}"),
+                }
             }
             Err(ReadlineError::Interrupted) => {
                 println!("CTRL+C received, exiting...");

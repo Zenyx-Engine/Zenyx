@@ -13,26 +13,35 @@ jobs:
   # Credit to https://github.com/Far-Beyond-Dev/Horizon/blob/main/.github/workflows/main.yml
   check-version:
     runs-on: ubuntu-latest
-    outputs:
-      should_release: ${{ steps.check.outputs.should_release }}
-      version: ${{ steps.check.outputs.version }}
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 2
-      
-      - name: Check if Cargo.toml version changed
-        id: check
+      - name: Get binary name
+        id: binary
         run: |
-          CURRENT_VERSION=$(grep -m1 version Cargo.toml | cut -d '"' -f2)
-          git checkout HEAD^1
-          PREVIOUS_VERSION=$(grep -m1 version Cargo.toml | cut -d '"' -f2)
-          if [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ]; then
-            echo "should_release=true" >> $GITHUB_OUTPUT
-            echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-          else
-            echo "should_release=false" >> $GITHUB_OUTPUT
+          BINARY_NAME=$(cargo metadata --format-version 1 | jq -r '.packages[0].targets[] | select(.kind[] | contains("bin")) | .name')
+          echo "name=$BINARY_NAME" >> "$GITHUB_OUTPUT"
+      - name: Check version change
+        id: version
+        run: |
+          git fetch
+          OLD_VERSION=$(git show HEAD^:Cargo.toml | grep -m 1 '^version = ' | cut -d '"' -f 2)
+          NEW_VERSION=$(grep -m 1 '^version = ' Cargo.toml | cut -d '"' -f 2)
+          if [ "$OLD_VERSION" != "$NEW_VERSION" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
           fi
+      - name: Create Release
+        if: steps.version.outputs.changed == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Release v${{ steps.version.outputs.version }}
+          files: target/release/${{ steps.binary.outputs.name }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
   build:
     strategy:
       fail-fast: false
@@ -76,7 +85,7 @@ jobs:
     - name: 🔧 Install Rust
       uses: actions-rs/toolchain@v1
       with:
-        toolchain: stable
+        toolchain: nightly
         override: true
         target: ${{ matrix.target }}
         profile: minimal
