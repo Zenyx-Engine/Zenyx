@@ -4,9 +4,8 @@ use anyhow::anyhow;
 use parking_lot::RwLock;
 use regex::Regex;
 
-use crate::core::repl::handler::COMMAND_MANAGER;
-
 use super::{handler::Command, input::tokenize};
+use crate::core::repl::handler::COMMAND_MANAGER;
 
 #[derive(Default)]
 pub struct HelpCommand;
@@ -62,7 +61,9 @@ impl Command for ClearCommand {
     fn execute(&self, _args: Option<Vec<String>>) -> Result<(), anyhow::Error> {
         println!("Clearing screen..., running command");
         let _result = if cfg!(target_os = "windows") {
-            std::process::Command::new("cmd").args(["/c", "cls"]).spawn()
+            std::process::Command::new("cmd")
+                .args(["/c", "cls"])
+                .spawn()
         } else {
             std::process::Command::new("clear").spawn()
         };
@@ -97,14 +98,13 @@ impl Command for ExitCommand {
     fn execute(&self, args: Option<Vec<String>>) -> Result<(), anyhow::Error> {
         match args {
             Some(args) => {
-
                 let exit_code = args[0].parse()?;
                 std::process::exit(exit_code);
                 // Ok(())
-            },
+            }
             None => {
                 std::process::exit(0);
-            },
+            }
         }
     }
 
@@ -136,27 +136,33 @@ impl Command for ExitCommand {
 pub struct ExecFile;
 
 impl Command for ExecFile {
-    fn execute(&self, args: Option<Vec<String>>) -> Result<(),anyhow::Error> {
+    fn execute(&self, args: Option<Vec<String>>) -> Result<(), anyhow::Error> {
         match args {
             Some(args) => {
-
                 let file_path = PathBuf::from_str(&args[0])?;
                 if file_path.extension().is_some() && file_path.extension().unwrap() != "zensh" {
                     return Err(anyhow!("Selected file was not a zensh file"));
                 } else {
                     let zscript = fs::read_to_string(file_path)?;
                     if let Ok(command) = eval(zscript) {
-                        println!("{:#?}",command);
-                        for (cmd_name,cmd_args) in command {
-                            COMMAND_MANAGER.read().execute(&cmd_name, cmd_args)?
+                        println!("{:#?}", command);
+                        for (cmd_name, cmd_args) in command {
+                            match COMMAND_MANAGER.read().execute(&cmd_name, cmd_args) {
+                                Ok(_) => (),
+                                Err(e) => {
+                                    println!(
+                                        "Error executing command returned an error: {}. Aborting script",
+                                        e
+                                    );
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
                 Ok(())
-            },
-            None => {
-                Err(anyhow!("Not enough argumentss"))
-            },
+            }
+            None => Err(anyhow!("Not enough argumentss")),
         }
     }
 
@@ -181,7 +187,7 @@ impl Command for ExecFile {
     }
 }
 
-fn eval(input: String) -> Result<Vec<(String,Option<Vec<String>>)>, anyhow::Error> {
+fn eval(input: String) -> Result<Vec<(String, Option<Vec<String>>)>, anyhow::Error> {
     if input.trim().is_empty() {
         return Err(anyhow!("Input was empty"));
     }
@@ -208,7 +214,7 @@ fn eval(input: String) -> Result<Vec<(String,Option<Vec<String>>)>, anyhow::Erro
         } else {
             None
         };
-        evaluted.push((cmd_name.to_owned(),args));
+        evaluted.push((cmd_name.to_owned(), args));
     }
     Ok(evaluted)
 }

@@ -109,14 +109,12 @@ impl CommandManager {
             command.execute(args)?;
             Ok(())
         } else {
-            println!("Command '{}' not found.", command);
             let corrected_cmd = check_similarity(command);
             if corrected_cmd.is_some() {
                 println!("Command: {} was not found. Did you mean {}?",command.red().bold(),corrected_cmd
                     .expect("A command was editied during execution, something has gone seriously wrong").green().bold().italic());
-                return Ok(());
             }
-            Ok(())
+            Err(anyhow::anyhow!("Command '{}' not found.", command))
         }
     }
 
@@ -136,7 +134,7 @@ impl CommandManager {
         self.commands.insert(command.get_name().to_lowercase(), command);
     }
     pub fn add_alias(&mut self, alias: &str, command: &str) {
-        self.aliases.insert(alias.to_string(), command.to_string());
+        self.aliases.insert(alias.to_string().to_lowercase(), command.to_string().to_lowercase());
     }
 }
 

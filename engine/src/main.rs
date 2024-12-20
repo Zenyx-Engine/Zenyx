@@ -7,6 +7,7 @@ pub mod core;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    
     setup();
     splash::print_splash();
     COMMAND_MANAGER.read().execute("help", None)?;
