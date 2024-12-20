@@ -1,84 +1,253 @@
-use std::{ffi::OsStr, process::Command};
+use std::{fs, path::PathBuf, str::FromStr};
 
-use lazy_static::lazy_static;
-use parking_lot::Mutex;
+use anyhow::anyhow;
+use parking_lot::RwLock;
+use regex::Regex;
 
-use super::COMMAND_LIST;
-use crate::core::repl::exec::evaluate_command;
-// increasing this value WILL cause a stack overflow
-// attempt at your own risk - Caz
-const MAX_RECURSION_DEPTH: usize = 500;
+use crate::core::repl::handler::COMMAND_MANAGER;
 
-lazy_static! {
-    static ref RECURSION_DEPTH: Mutex<usize> = parking_lot::Mutex::new(0);
-}
+use super::{handler::Command, input::tokenize};
 
-pub(crate) fn say_hello() -> anyhow::Result<()> {
-    println!("Hello, World!");
-    Ok(())
-}
+#[derive(Default)]
+pub struct HelpCommand;
 
-pub(crate) fn echo(args: Vec<String>) -> anyhow::Result<()> {
-    println!("{}", args.join(" "));
-    Ok(())
-}
+impl Command for HelpCommand {
+    fn execute(&self, _args: Option<Vec<String>>) -> Result<(), anyhow::Error> {
+        let manager = COMMAND_MANAGER.read();
+        println!("Available commands:\n");
 
-pub(crate) fn exit() -> anyhow::Result<()> {
-    println!("Exiting...");
-    std::process::exit(0)
-}
+        for (_, command) in manager.get_commands() {
+            println!(
+                "Command: {}\n\tDescription: {}\n\tParameters: {}\n\tHelp: {}\n",
+                command.get_name(),
+                command.get_description(),
+                command.get_params(),
+                command.get_help()
+            );
+        }
 
-pub(crate) fn clear() -> anyhow::Result<()> {
-    println!("Clearing screen..., running command");
-    let _result = if cfg!(target_os = "windows") {
-        Command::new("cmd").args(["/c", "cls"]).spawn()
-    } else {
-        Command::new("clear").spawn()
-    };
-    Ok(())
-}
-
-pub(crate) fn help() -> anyhow::Result<()> {
-    println!("Commands:");
-    for cmd in COMMAND_LIST.commands.read().iter() {
-        println!("{:#}", cmd);
+        if !manager.aliases.is_empty() {
+            println!("Aliases:");
+            for (alias, command) in &manager.aliases {
+                println!("\t{} -> {}", alias, command);
+            }
+        }
+        Ok(())
     }
-    Ok(())
-}
-pub(crate) fn exec(args: Vec<String>) -> anyhow::Result<()> {
-    *RECURSION_DEPTH.lock() += 1;
-    if *RECURSION_DEPTH.lock() > MAX_RECURSION_DEPTH {
-        eprintln!("Maximum recursion depth reached. Aborting.");
-        *RECURSION_DEPTH.lock() = 0;
-        return Ok(());
-    }
-    println!("Recursion depth: {}", *RECURSION_DEPTH.lock());
-    let file_path_str = &args[0];
-    let file_path = std::path::Path::new(file_path_str);
-    println!("File path: {:#?}", file_path);
 
-    if !file_path.is_file() {
-        eprintln!(
-            "Error: File does not exist or is not a valid file: {}",
-            file_path.display()
-        );
-        return Ok(());
+    fn undo(&self) {}
+
+    fn redo(&self) {}
+
+    fn get_description(&self) -> String {
+        String::from("help")
     }
-    if file_path.extension() != Some(OsStr::new("zensh")) {
-        eprintln!(
-            "Error: File is not a zenshell script: {:#?}",
-            file_path.extension()
-        );
-        //TODO: dont panic on this error
-        return Ok(());
+
+    fn get_help(&self) -> String {
+        String::from("Displays a list of available commands and their descriptions.")
     }
-    println!("Executing file: {:#?}", file_path);
-    let file_content = std::fs::read_to_string(file_path)?;
-    if file_content.is_empty() {
-        eprintln!("Error: file has no content. Is this a valid zenshell script?");
-        return Ok(());
+
+    fn get_params(&self) -> String {
+        String::from("No parameters required.")
     }
-    println!("File contents:\n{file_content}");
-    evaluate_command(file_content.trim())?;
-    Ok(())
+
+    fn get_name(&self) -> String {
+        String::from("Help")
+    }
+}
+#[derive(Default)]
+pub struct ClearCommand;
+
+impl Command for ClearCommand {
+    fn execute(&self, _args: Option<Vec<String>>) -> Result<(), anyhow::Error> {
+        println!("Clearing screen..., running command");
+        let _result = if cfg!(target_os = "windows") {
+            std::process::Command::new("cmd").args(["/c", "cls"]).spawn()
+        } else {
+            std::process::Command::new("clear").spawn()
+        };
+        Ok(())
+    }
+
+    fn undo(&self) {}
+
+    fn redo(&self) {}
+
+    fn get_description(&self) -> String {
+        String::from("A simple command that clears the terminal")
+    }
+
+    fn get_name(&self) -> String {
+        String::from("clear")
+    }
+
+    fn get_help(&self) -> String {
+        String::from("Clears the terminal")
+    }
+
+    fn get_params(&self) -> String {
+        String::from("None")
+    }
+}
+
+#[derive(Default)]
+pub struct ExitCommand;
+
+impl Command for ExitCommand {
+    fn execute(&self, args: Option<Vec<String>>) -> Result<(), anyhow::Error> {
+        match args {
+            Some(args) => {
+
+                let exit_code = args[0].parse()?;
+                std::process::exit(exit_code);
+                // Ok(())
+            },
+            None => {
+                std::process::exit(0);
+            },
+        }
+    }
+
+    fn undo(&self) {
+        todo!()
+    }
+
+    fn redo(&self) {
+        todo!()
+    }
+
+    fn get_description(&self) -> String {
+        String::from("Gracefully exists the program")
+    }
+
+    fn get_name(&self) -> String {
+        String::from("exit")
+    }
+
+    fn get_help(&self) -> String {
+        String::from("Exits, probably")
+    }
+
+    fn get_params(&self) -> String {
+        String::from("None")
+    }
+}
+#[derive(Default)]
+pub struct ExecFile;
+
+impl Command for ExecFile {
+    fn execute(&self, args: Option<Vec<String>>) -> Result<(),anyhow::Error> {
+        match args {
+            Some(args) => {
+
+                let file_path = PathBuf::from_str(&args[0])?;
+                if file_path.extension().is_some() && file_path.extension().unwrap() != "zensh" {
+                    return Err(anyhow!("Selected file was not a zensh file"));
+                } else {
+                    let zscript = fs::read_to_string(file_path)?;
+                    if let Ok(command) = eval(zscript) {
+                        println!("{:#?}",command);
+                        for (cmd_name,cmd_args) in command {
+                            COMMAND_MANAGER.read().execute(&cmd_name, cmd_args)?
+                        }
+                    }
+                }
+                Ok(())
+            },
+            None => {
+                Err(anyhow!("Not enough argumentss"))
+            },
+        }
+    }
+
+    fn undo(&self) {}
+
+    fn redo(&self) {}
+
+    fn get_description(&self) -> String {
+        String::from("Executes a file path")
+    }
+
+    fn get_name(&self) -> String {
+        String::from("exec")
+    }
+
+    fn get_help(&self) -> String {
+        String::from("this will read the contents of a .zensh file, evaluate it, and run its input")
+    }
+
+    fn get_params(&self) -> String {
+        String::from("1: File path")
+    }
+}
+
+fn eval(input: String) -> Result<Vec<(String,Option<Vec<String>>)>, anyhow::Error> {
+    if input.trim().is_empty() {
+        return Err(anyhow!("Input was empty"));
+    }
+
+    let pattern = Regex::new(r"[;|\n]").unwrap();
+    let commands: Vec<&str> = pattern.split(&input).collect();
+    let mut evaluted = vec![];
+
+    for command in commands {
+        let command = command.trim();
+        if command.is_empty() {
+            println!("Empty command, skipping.");
+            continue;
+        }
+
+        let tokens = tokenize(command);
+        if tokens.is_empty() {
+            println!("Empty command, skipping.");
+            continue;
+        }
+        let cmd_name = &tokens[0];
+        let args: Option<Vec<String>> = if tokens.len() > 1 {
+            Some(tokens[1..].iter().map(|s| s.to_string()).collect())
+        } else {
+            None
+        };
+        evaluted.push((cmd_name.to_owned(),args));
+    }
+    Ok(evaluted)
+}
+
+#[derive(Default)]
+pub struct CounterCommand {
+    counter: RwLock<u32>,
+}
+
+impl Command for CounterCommand {
+    fn execute(&self, _args: Option<Vec<String>>) -> Result<(), anyhow::Error> {
+        // Increment the counter
+        let mut count = self.counter.write();
+        *count += 1;
+        println!("CounterCommand executed. Current count: {}", *count);
+        Ok(())
+    }
+
+    fn undo(&self) {
+        println!("Undo CounterCommand.");
+    }
+
+    fn redo(&self) {
+        println!("Redo CounterCommand.");
+    }
+
+    fn get_description(&self) -> String {
+        String::from("counter")
+    }
+
+    fn get_help(&self) -> String {
+        String::from("Increments a counter every time it's executed.")
+    }
+
+    fn get_params(&self) -> String {
+        String::from("No parameters for CounterCommand.")
+    }
+
+    fn get_name(&self) -> String {
+        String::from("count")
+    }
 }

@@ -1,36 +1,19 @@
-#![deny(clippy::unwrap_in_result)]
-use anyhow::Result;
-use log::LevelFilter;
-use plugin_api::plugin_imports::*;
-use plugin_api::{get_plugin, PluginManager};
+use core::{repl::{handler::COMMAND_MANAGER, input::handle_repl, setup}, splash};
+
+use anyhow::Ok;
+
 
 pub mod core;
-pub mod utils;
-
-use utils::{logger::LOGGER, splash::print_splash};
 
 #[tokio::main]
-async fn main() -> Result<()> {
-    // Load all plugins
+async fn main() -> anyhow::Result<()> {
+    setup();
+    splash::print_splash();
+    COMMAND_MANAGER.read().execute("help", None)?;
+    let t = tokio::spawn(handle_repl());
 
-    log::set_logger(&*LOGGER).ok();
-    log::set_max_level(LevelFilter::Off);
-
-    print_splash();
-    let mut plugin_manager = PluginManager::new();
-    let plugins = plugin_manager.load_all();
-    println!("Plugins loaded: {:?}", plugins);
-
-    // Get the player plugin
-    let player_lib = get_plugin!(player_lib, plugins);
-    player_lib.test();
-
-    LOGGER.write_to_stdout();
-
-    let shell_thread = tokio::task::spawn(async { core::repl::exec::handle_repl().await });
-
-    core::init_renderer()?;
-    shell_thread.await??;
+    t.await??;
 
     Ok(())
+    
 }
