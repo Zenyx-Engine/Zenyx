@@ -187,37 +187,6 @@ impl Command for ExecFile {
     }
 }
 
-fn eval(input: String) -> Result<Vec<(String, Option<Vec<String>>)>, anyhow::Error> {
-    if input.trim().is_empty() {
-        return Err(anyhow!("Input was empty"));
-    }
-
-    let pattern = Regex::new(r"[;|\n]").unwrap();
-    let commands: Vec<&str> = pattern.split(&input).collect();
-    let mut evaluted = vec![];
-
-    for command in commands {
-        let command = command.trim();
-        if command.is_empty() {
-            println!("Empty command, skipping.");
-            continue;
-        }
-
-        let tokens = tokenize(command);
-        if tokens.is_empty() {
-            println!("Empty command, skipping.");
-            continue;
-        }
-        let cmd_name = &tokens[0];
-        let args: Option<Vec<String>> = if tokens.len() > 1 {
-            Some(tokens[1..].iter().map(|s| s.to_string()).collect())
-        } else {
-            None
-        };
-        evaluted.push((cmd_name.to_owned(), args));
-    }
-    Ok(evaluted)
-}
 
 #[derive(Default)]
 pub struct CounterCommand {
@@ -290,3 +259,39 @@ impl Command for PanicCommmand {
         String::from("optional: panic msg")
     }
 }
+
+
+
+
+fn eval(input: String) -> Result<Vec<(String,Option<Vec<String>>)>, anyhow::Error> {
+    if input.trim().is_empty() {
+        return Err(anyhow!("Input was empty"));
+    }
+
+    let pattern = Regex::new(r"[;|\n]").unwrap();
+    let commands: Vec<&str> = pattern.split(&input).collect();
+    let mut evaluted = vec![];
+
+    for command in commands {
+        let command = command.trim();
+        if command.is_empty() {
+            println!("Empty command, skipping.");
+            continue;
+        }
+
+        let tokens = tokenize(command);
+        if tokens.is_empty() {
+            println!("Empty command, skipping.");
+            continue;
+        }
+        let cmd_name = &tokens[0];
+        let args: Option<Vec<String>> = if tokens.len() > 1 {
+            Some(tokens[1..].iter().map(|s| s.to_string()).collect())
+        } else {
+            None
+        };
+        evaluted.push((cmd_name.to_owned(),args));
+    }
+    Ok(evaluted)
+}
+
