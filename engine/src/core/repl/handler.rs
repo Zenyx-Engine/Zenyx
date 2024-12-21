@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+
 use colored::Colorize;
 use lazy_static::lazy_static;
 use parking_lot::RwLock;
@@ -28,7 +29,6 @@ macro_rules! alias {
         )*
     };
 }
-
 
 fn hamming_distance(a: &str, b: &str) -> Option<usize> {
     if a.len() != b.len() {
@@ -71,7 +71,7 @@ fn check_similarity(target: &str) -> Option<String> {
     let mut best_match: Option<String> = None;
     let mut best_distance = usize::MAX;
 
-    for (cmd_name,_) in COMMAND_MANAGER.read().get_commands() {
+    for (cmd_name, _) in COMMAND_MANAGER.read().get_commands() {
         if let Some(hamming_dist) = hamming_distance(target, cmd_name) {
             if hamming_dist <= max_hamming_distance && hamming_dist < best_distance {
                 best_distance = hamming_dist;
@@ -92,6 +92,7 @@ fn check_similarity(target: &str) -> Option<String> {
 pub struct CommandManager {
     pub commands: HashMap<String, Box<dyn Command>>,
     pub aliases: HashMap<String, String>,
+    pub categories: HashMap<String, Category>,
 }
 
 impl CommandManager {
@@ -99,12 +100,23 @@ impl CommandManager {
         CommandManager {
             commands: HashMap::new(),
             aliases: HashMap::new(),
+            categories: HashMap::new(),
         }
     }
+
+    pub fn add_category(&mut self, category: Category) {
+        self.categories.insert(category.name.clone(), category);
+    }
+
     pub fn get_commands(&self) -> std::collections::hash_map::Iter<'_, String, Box<dyn Command>> {
         self.commands.iter()
     }
-    pub fn execute_command(&self,command: &str,args: Option<Vec<String>>) -> Result<(),anyhow::Error> {
+
+    pub fn execute_command(
+        &self,
+        command: &str,
+        args: Option<Vec<String>>,
+    ) -> Result<(), anyhow::Error> {
         if let Some(command) = self.commands.get(command) {
             command.execute(args)?;
             Ok(())
@@ -118,28 +130,65 @@ impl CommandManager {
         }
     }
 
-    pub fn execute(&self, command: &str,args: Option<Vec<String>>) -> Result<(), anyhow::Error> {
+    pub fn execute(&self, command: &str, args: Option<Vec<String>>) -> Result<(), anyhow::Error> {
         match self.aliases.get(command) {
-            Some(command) => self.execute(command,args),
+            Some(command) => self.execute(command, args),
             // check to see if we are using an alias or the command just doesnt exist
             None => {
-                self.execute_command(command,args)?;
+                self.execute_command(command, args)?;
                 Ok(())
-            },
+            }
         }
-
     }
 
     pub fn add_command(&mut self, command: Box<dyn Command>) {
-        self.commands.insert(command.get_name().to_lowercase(), command);
+        self.commands
+            .insert(command.get_name().to_lowercase(), command);
     }
+
+    pub fn add_command_with_category(&mut self, command: Box<dyn Command>, category: Category) {
+        if self.categories.contains_key(&category.name) {
+            let mut cmd_name = command.get_name().to_lowercase();
+            cmd_name.insert_str(0, &format!("{}_", &&category.uid.to_lowercase()));
+            println!("{}", cmd_name);
+            self.commands.insert(cmd_name, command);
+        } else {
+            panic!("Category {} does not exist", category.name);
+        }
+    }
+
     pub fn add_alias(&mut self, alias: &str, command: &str) {
-        self.aliases.insert(alias.to_string().to_lowercase(), command.to_string().to_lowercase());
+        self.aliases.insert(
+            alias.to_string().to_lowercase(),
+            command.to_string().to_lowercase(),
+        );
+    }
+}
+#[derive(Debug, Clone)]
+pub struct Category {
+    // eg:  Zenyx -> Z
+    // eg: core -> cr
+    // eg: exitcmd -> cr_exit
+    // eg:  echo -> z_echo
+    pub uid: String,
+    // eg: Zenyx
+    pub name: String,
+    // eg: Zenyx internal commands
+    pub description: String,
+}
+
+impl Category {
+    pub fn new(uid: &str, name: &str, description: &str) -> Self {
+        Self {
+            uid: uid.to_string(),
+            name: name.to_string(),
+            description: description.to_string(),
+        }
     }
 }
 
 pub trait Command: Send + Sync {
-    fn execute(&self, args: Option<Vec<String>>) -> Result<(),anyhow::Error>;
+    fn execute(&self, args: Option<Vec<String>>) -> Result<(), anyhow::Error>;
     fn undo(&self);
     fn redo(&self);
     fn get_description(&self) -> String;

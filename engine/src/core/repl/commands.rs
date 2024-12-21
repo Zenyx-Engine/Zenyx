@@ -18,7 +18,7 @@ impl Command for HelpCommand {
         for (_, command) in manager.get_commands() {
             println!(
                 "Command: {}\n\tDescription: {}\n\tParameters: {}\n\tHelp: {}\n",
-                command.get_name(),
+                command.get_name().to_lowercase(),
                 command.get_description(),
                 command.get_params(),
                 command.get_help()
@@ -255,5 +255,38 @@ impl Command for CounterCommand {
 
     fn get_name(&self) -> String {
         String::from("count")
+    }
+}
+#[derive(Default)]
+pub struct PanicCommmand;
+impl Command for PanicCommmand {
+    fn execute(&self, args: Option<Vec<String>>) -> Result<(), anyhow::Error> {
+        if args.is_some() {
+            let panic_msg = &args.unwrap()[0];
+            panic!("{}", panic_msg)
+        }
+        let option: Option<i32> = None;
+        println!("Unwrapping None: {}", option.unwrap());
+        panic!("Panic command was called")
+    }
+
+    fn undo(&self) {}
+
+    fn redo(&self) {}
+
+    fn get_description(&self) -> String {
+        String::from("causes a panic with your provided message")
+    }
+
+    fn get_name(&self) -> String {
+        String::from("panic")
+    }
+
+    fn get_help(&self) -> String {
+        String::from("")
+    }
+
+    fn get_params(&self) -> String {
+        String::from("optional: panic msg")
     }
 }

@@ -1,0 +1,3 @@
+// struct ComponentRegistry {
+//     components
+// }
