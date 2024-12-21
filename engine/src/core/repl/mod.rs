@@ -1,4 +1,6 @@
-use commands::{ClearCommand, CounterCommand, ExecFile, ExitCommand, HelpCommand, PanicCommmand};
+use commands::{
+    ClearCommand, CounterCommand, ExecFile, ExitCommand, HelpCommand, PanicCommmand, ZLua,
+};
 use handler::{COMMAND_MANAGER, Category};
 
 use crate::commands;
@@ -13,7 +15,8 @@ pub fn setup() {
         ClearCommand,
         ExitCommand,
         CounterCommand,
-        PanicCommmand
+        PanicCommmand,
+        ZLua
     );
     let cat = Category::new("cr", "Core", "Core commands");
     COMMAND_MANAGER.write().add_category(cat.clone());
