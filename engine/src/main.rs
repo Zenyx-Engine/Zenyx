@@ -1,18 +1,33 @@
-use core::{repl::{handler::COMMAND_MANAGER, input::handle_repl, setup}, splash};
+#![feature(panic_payload_as_str)]
+use core::{
+    panic::set_panic_hook,
+    repl::{handler::COMMAND_MANAGER, setup},
+    splash, workspace,
+};
 
 use anyhow::Ok;
-
+use colored::Colorize;
+use tokio::runtime;
 
 pub mod core;
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    setup();
-    splash::print_splash();
-    COMMAND_MANAGER.read().execute("help", None)?;
-    let t = tokio::spawn(handle_repl());
+fn main() -> anyhow::Result<()> {
+    if !cfg!(debug_assertions) {
+        println!("{}", "Debug mode disabled".bright_blue());
+        set_panic_hook();
+    }
+    let runtime = runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()?;
 
-    t.await??;
+    runtime.block_on(async {
+        setup();
+        splash::print_splash();
+        COMMAND_MANAGER.read().execute("help", None)?;
+        let t = tokio::spawn(core::repl::input::handle_repl());
+        t.await??;
+        Ok(())
+    })?;
 
     Ok(())
     

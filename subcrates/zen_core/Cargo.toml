@@ -6,3 +6,10 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.94"
 thiserror = "2.0.8"
+parking_lot.workspace = true
+
+[profile.dev]
+debug-assertions = true
+
+[profile.release]
+debug-assertions = false

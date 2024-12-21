@@ -161,10 +161,10 @@ pub fn evaluate_command(input: &str) -> anyhow::Result<()> {
         } else {
             None
         };
-            match COMMAND_MANAGER.read().execute(cmd_name, args) {
-                Ok(_) => continue,
-                Err(e) => return Err(e)
-            }
+        match COMMAND_MANAGER.read().execute(cmd_name, args) {
+            Ok(_) => continue,
+            Err(e) => return Err(e),
+        }
     }
     Ok(())
 }

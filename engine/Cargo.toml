@@ -2,11 +2,14 @@
 name = "engine"
 version = "0.1.0"
 edition = "2024"
-
+repository = "https://github.com/Zenyx-Engine/Zenyx"
 [dependencies]
 anyhow = "1.0.94"
+backtrace = "0.3.74"
 chrono = "0.4.39"
 colored = "2.2.0"
+crashreport = "1.0.1"
+dirs-next = "2.0.0"
 
 lazy_static.workspace = true
 log = "0.4.22"
@@ -15,3 +18,9 @@ parking_lot.workspace = true
 regex = "1.11.1"
 rustyline = { version = "15.0.0", features = ["derive", "rustyline-derive"] }
 tokio = { version = "1.42.0", features = ["macros", "parking_lot", "rt", "rt-multi-thread"] }
+
+[profile.dev]
+debug-assertions = true
+
+[profile.release]
+debug-assertions = false
