@@ -5,8 +5,8 @@ use core::{
     splash, workspace,
 };
 
-use anyhow::Ok;
 use colored::Colorize;
+use mlua::Lua;
 use tokio::runtime;
 
 pub mod core;
@@ -26,9 +26,8 @@ fn main() -> anyhow::Result<()> {
         COMMAND_MANAGER.read().execute("help", None)?;
         let t = tokio::spawn(core::repl::input::handle_repl());
         t.await??;
-        Ok(())
+        Ok::<(), anyhow::Error>(())
     })?;
 
     Ok(())
-    
 }
