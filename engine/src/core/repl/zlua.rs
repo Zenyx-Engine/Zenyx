@@ -1,5 +1,4 @@
-use rand::Rng;
-use mlua::{Function, Lua, MultiValue, Number, Value::Nil};
+use mlua::{Function, Lua, LuaOptions, MultiValue, Number, Value::Nil};
 use rustyline::{error::ReadlineError, DefaultEditor};
 use crate::core::repl::handler::Command;
 
@@ -10,7 +9,10 @@ impl Command for ZLua {
     fn execute(&self, _args: Option<Vec<String>>) -> Result<(), anyhow::Error> {
         let time = chrono::Local::now().format("%H:%M:%S.%3f").to_string();
         let prompt = format!("[{}/{}] {}", time, "ZLUA", ">>\t");
-        let lua = Lua::new();
+        let lua = Lua::new_with(
+            mlua::StdLib::ALL_SAFE, 
+            LuaOptions::default()
+        )?;
         let globals = lua.globals();
         //This just adds 2 numbers together
         let add = lua.create_function(|_, (number1,number2):(i32,i32)|{
@@ -28,22 +30,12 @@ impl Command for ZLua {
         })?;
         globals.set("is_equal", is_equal)?;
 
-        //This is just true or false
         let log = lua.create_function(|_, (msg,): (String,)| {
-            println!("{}", msg);
-            Ok(())
+        println!("{}", msg);
+        Ok(())
         })?;
         globals.set("log", log)?;
 
-        let if_statement = lua.create_function(|_, (condition, then_value, else_value): (bool, String, String)| {
-            if condition {
-                println!("{}", then_value);
-            } else {
-                println!("{}", else_value);
-            }
-            Ok(())
-        })?;
-        globals.set("if_then", if_statement)?;
         
         let mut editor = DefaultEditor::new().expect("Failed to create editor");
 
