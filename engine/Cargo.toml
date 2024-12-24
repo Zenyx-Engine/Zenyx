@@ -20,6 +20,8 @@ regex = "1.11.1"
 rustyline = { version = "15.0.0", features = ["derive", "rustyline-derive"] }
 tokio = { version = "1.42.0", features = ["macros", "parking_lot", "rt", "rt-multi-thread"] }
 
+rand = "0.8.5"
+
 [profile.dev]
 debug-assertions = true
 
