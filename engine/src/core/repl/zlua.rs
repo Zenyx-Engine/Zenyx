@@ -1,4 +1,5 @@
-use mlua::{Lua, MultiValue, Number};
+use rand::Rng;
+use mlua::{Function, Lua, MultiValue, Number, Value::Nil};
 use rustyline::{error::ReadlineError, DefaultEditor};
 use crate::core::repl::handler::Command;
 
@@ -11,25 +12,40 @@ impl Command for ZLua {
         let prompt = format!("[{}/{}] {}", time, "ZLUA", ">>\t");
         let lua = Lua::new();
         let globals = lua.globals();
+        //This just adds 2 numbers together
         let add = lua.create_function(|_, (number1,number2):(i32,i32)|{
             let result = number1 + number2;
             println!("{result}");
             Ok(())
         })?;
+        globals.set("add", add)?;
+
         let is_equal = lua.create_function(|_, (list1, list2): (i32, i32)| {
             // This function just checks whether two string lists are equal, and in an inefficient way.
             // Lua callbacks return `mlua::Result`, an Ok value is a normal return, and an Err return
             // turns into a Lua 'error'. Again, any type that is convertible to Lua may be returned.
             Ok(list1 == list2)
         })?;
-        globals.set("isequal", is_equal)?;
+        globals.set("is_equal", is_equal)?;
+
+        //This is just true or false
         let log = lua.create_function(|_, (msg,): (String,)| {
             println!("{}", msg);
             Ok(())
         })?;
         globals.set("log", log)?;
+
+        let if_statement = lua.create_function(|_, (condition, then_value, else_value): (bool, String, String)| {
+            if condition {
+                println!("{}", then_value);
+            } else {
+                println!("{}", else_value);
+            }
+            Ok(())
+        })?;
+        globals.set("if_then", if_statement)?;
+        
         let mut editor = DefaultEditor::new().expect("Failed to create editor");
-        globals.set("add", add)?;
 
         loop {
             let mut prompt = &prompt;
