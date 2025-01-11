@@ -140,7 +140,6 @@ impl CommandManager {
             .insert(command.get_name().to_lowercase(), command);
     }
 
-
     pub fn add_alias(&mut self, alias: &str, command: &str) {
         self.aliases.insert(
             alias.to_string().to_lowercase(),
@@ -148,7 +147,6 @@ impl CommandManager {
         );
     }
 }
-
 
 pub trait Command: Send + Sync {
     fn execute(&self, args: Option<Vec<String>>) -> Result<(), anyhow::Error>;

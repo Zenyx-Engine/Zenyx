@@ -1,11 +1,12 @@
 use std::{fs, path::PathBuf, str::FromStr};
+
+use anyhow::anyhow;
 use colored::Colorize;
 use mlua::prelude::*;
-use anyhow::anyhow;
 use mlua::{Lua, MultiValue};
 use parking_lot::RwLock;
 use regex::Regex;
-use rustyline::{error::ReadlineError, DefaultEditor};
+use rustyline::{DefaultEditor, error::ReadlineError};
 
 use super::{handler::Command, input::tokenize};
 use crate::core::repl::handler::COMMAND_MANAGER;

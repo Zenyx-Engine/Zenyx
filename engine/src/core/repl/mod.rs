@@ -1,6 +1,4 @@
-use commands::{
-    ClearCommand, CounterCommand, ExitCommand, HelpCommand, PanicCommmand,ExecFile
-};
+use commands::{ClearCommand, CounterCommand, ExecFile, ExitCommand, HelpCommand, PanicCommmand};
 
 use crate::commands;
 
@@ -13,7 +11,6 @@ pub fn setup() {
     commands!(
         HelpCommand,
         ExecFile,
-
         ClearCommand,
         ExitCommand,
         CounterCommand,

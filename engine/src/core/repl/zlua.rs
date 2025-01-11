@@ -1,5 +1,6 @@
-use mlua::{Function, Lua, LuaOptions, MultiValue, Number, Value::Nil};
-use rustyline::{error::ReadlineError, DefaultEditor};
+use mlua::{Lua, LuaOptions, MultiValue};
+use rustyline::{DefaultEditor, error::ReadlineError};
+
 use crate::core::repl::handler::Command;
 
 #[derive(Default)]
@@ -9,13 +10,10 @@ impl Command for ZLua {
     fn execute(&self, _args: Option<Vec<String>>) -> Result<(), anyhow::Error> {
         let time = chrono::Local::now().format("%H:%M:%S.%3f").to_string();
         let prompt = format!("[{}/{}] {}", time, "ZLUA", ">>\t");
-        let lua = Lua::new_with(
-            mlua::StdLib::ALL_SAFE, 
-            LuaOptions::default()
-        )?;
+        let lua = Lua::new_with(mlua::StdLib::ALL_SAFE, LuaOptions::default())?;
         let globals = lua.globals();
         //This just adds 2 numbers together
-        let add = lua.create_function(|_, (number1,number2):(i32,i32)|{
+        let add = lua.create_function(|_, (number1, number2): (i32, i32)| {
             let result = number1 + number2;
             println!("{result}");
             Ok(())
@@ -24,23 +22,25 @@ impl Command for ZLua {
 
         let is_equal = lua.create_function(|_, (list1, list2): (i32, i32)| {
             if list1 == 0 || list2 == 0 {
-                return Err(mlua::Error::RuntimeError("Zero values not allowed".to_string()));
+                return Err(mlua::Error::RuntimeError(
+                    "Zero values not allowed".to_string(),
+                ));
             }
             Ok(list1 == list2)
         })?;
         globals.set("isEqual", is_equal)?;
 
         let log = lua.create_function(|_, (msg,): (String,)| {
-        println!("{}", msg);
-        Ok(())
+            println!("{}", msg);
+            Ok(())
         })?;
         globals.set("log", log)?;
 
-        let fail_safe = lua.create_function(|_,()|{
+        let fail_safe = lua.create_function(|_, ()| {
             println!("Failed");
             Ok(())
         })?;
-        globals.set("failSafe",fail_safe)?;
+        globals.set("failSafe", fail_safe)?;
         let mut editor = DefaultEditor::new().expect("Failed to create editor");
 
         loop {
@@ -65,7 +65,7 @@ impl Command for ZLua {
                                 mlua::Value::Number(n) => println!("Got number: {}", n),
                                 mlua::Value::String(s) => println!("Got string: {}", s.to_str()?),
                                 mlua::Value::Boolean(b) => println!("Got boolean: {}", b),
-                                _ => eprintln!("Got unexpected type: {:#?}", value)
+                                _ => eprintln!("Got unexpected type: {:#?}", value),
                             }
                         }
                         editor.add_history_entry(line).unwrap();
@@ -92,7 +92,6 @@ impl Command for ZLua {
                         eprintln!("Input that caused error: {}", line);
                         break;
                     }
-        
                 }
             }
         }

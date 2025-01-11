@@ -1,10 +1,11 @@
 use colored::Colorize;
 
 pub fn print_splash() {
-    println!
-("#                                   #
+    println!(
+        "#                                   #
 #   Welcome to the Zenyx terminal   #
-#                                   #");
+#                                   #"
+    );
     println!(
         "{}",
         format!(
