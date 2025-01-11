@@ -1,8 +1,6 @@
 use commands::{
-    ClearCommand, CounterCommand, ExecFile, ExitCommand, HelpCommand, PanicCommmand
+    ClearCommand, CounterCommand, ExitCommand, HelpCommand, PanicCommmand,ExecFile
 };
-use handler::{COMMAND_MANAGER, Category};
-use zlua::ZLua;
 
 use crate::commands;
 
@@ -14,15 +12,12 @@ pub mod zlua;
 pub fn setup() {
     commands!(
         HelpCommand,
+        ExecFile,
+
         ClearCommand,
         ExitCommand,
         CounterCommand,
         PanicCommmand,
         zlua::ZLua
     );
-    let cat = Category::new("cr", "Core", "Core commands");
-    COMMAND_MANAGER.write().add_category(cat.clone());
-    COMMAND_MANAGER
-        .write()
-        .add_command_with_category(Box::new(ExecFile), cat.clone());
 }

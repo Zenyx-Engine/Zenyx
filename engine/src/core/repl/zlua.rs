@@ -84,8 +84,7 @@ impl Command for ZLua {
                         ..
                     }) => {
                         // continue reading input and append it to `line`
-                        line.push_str("\n"); // separate input lines
-                        prompt = prompt;
+                        line.push('\n'); // separate input lines
                     }
 
                     Err(e) => {

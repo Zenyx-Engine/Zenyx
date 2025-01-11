@@ -92,7 +92,6 @@ fn check_similarity(target: &str) -> Option<String> {
 pub struct CommandManager {
     pub commands: HashMap<String, Box<dyn Command>>,
     pub aliases: HashMap<String, String>,
-    pub categories: HashMap<String, Category>,
 }
 
 impl CommandManager {
@@ -100,12 +99,7 @@ impl CommandManager {
         CommandManager {
             commands: HashMap::new(),
             aliases: HashMap::new(),
-            categories: HashMap::new(),
         }
-    }
-
-    pub fn add_category(&mut self, category: Category) {
-        self.categories.insert(category.name.clone(), category);
     }
 
     pub fn get_commands(&self) -> std::collections::hash_map::Iter<'_, String, Box<dyn Command>> {
@@ -146,16 +140,6 @@ impl CommandManager {
             .insert(command.get_name().to_lowercase(), command);
     }
 
-    pub fn add_command_with_category(&mut self, command: Box<dyn Command>, category: Category) {
-        if self.categories.contains_key(&category.name) {
-            let mut cmd_name = command.get_name().to_lowercase();
-            cmd_name.insert_str(0, &format!("{}_", &&category.uid.to_lowercase()));
-            println!("{}", cmd_name);
-            self.commands.insert(cmd_name, command);
-        } else {
-            panic!("Category {} does not exist", category.name);
-        }
-    }
 
     pub fn add_alias(&mut self, alias: &str, command: &str) {
         self.aliases.insert(
@@ -164,28 +148,7 @@ impl CommandManager {
         );
     }
 }
-#[derive(Debug, Clone)]
-pub struct Category {
-    // eg:  Zenyx -> Z
-    // eg: core -> cr
-    // eg: exitcmd -> cr_exit
-    // eg:  echo -> z_echo
-    pub uid: String,
-    // eg: Zenyx
-    pub name: String,
-    // eg: Zenyx internal commands
-    pub description: String,
-}
 
-impl Category {
-    pub fn new(uid: &str, name: &str, description: &str) -> Self {
-        Self {
-            uid: uid.to_string(),
-            name: name.to_string(),
-            description: description.to_string(),
-        }
-    }
-}
 
 pub trait Command: Send + Sync {
     fn execute(&self, args: Option<Vec<String>>) -> Result<(), anyhow::Error>;
