@@ -63,6 +63,7 @@ jobs:
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
       - name: 📦 Prepare binary and checksum
+        shell: bash
         run: |
           # Create temp directory for zip contents
           mkdir -p temp_release
@@ -71,7 +72,7 @@ jobs:
           chmod +x temp_release/zenyx${{ matrix.file_extension }}
           # Create SHA256 checksum
           cd temp_release
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
+          if [ "$RUNNER_OS" == "Windows" ]; then
             certutil -hashfile zenyx${{ matrix.file_extension }} SHA256 > zenyx.sha256
             # Remove certutil's extra output, keeping only the hash
             sed -i '1d' zenyx.sha256
