@@ -4,3 +4,5 @@ pub mod panic;
 pub mod repl;
 pub mod splash;
 pub mod workspace;
+
+pub mod render;

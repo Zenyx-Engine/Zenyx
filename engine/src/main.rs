@@ -6,8 +6,11 @@ use core::{
 };
 
 use colored::Colorize;
+use log::info;
 use mlua::Lua;
+use parking_lot::Mutex;
 use tokio::runtime;
+use winit::event_loop::EventLoop;
 
 pub mod core;
 
@@ -23,9 +26,22 @@ fn main() -> anyhow::Result<()> {
     runtime.block_on(async {
         setup();
         splash::print_splash();
-        COMMAND_MANAGER.read().execute("help", None)?;
-        let t = tokio::spawn(core::repl::input::handle_repl());
-        t.await??;
+        info!("Type 'help' for a list of commands.");
+
+        let repl_handle = tokio::spawn(core::repl::input::handle_repl());
+        let event_loop = EventLoop::new().unwrap();
+
+            core::render::init_renderer(event_loop);
+
+
+        // Await the REPL
+        if let Err(e) = repl_handle.await {
+            eprintln!("REPL error: {:?}", e);
+        }
+
+        // Wait for the renderer to finish (if needed)
+
+
         Ok::<(), anyhow::Error>(())
     })?;
 
