@@ -25,6 +25,7 @@ wgpu = "24.0.1"
 winit = "0.30.8"
 bytemuck = "1.21.0"
 futures = "0.3.31"
+cgmath = "0.18.0"
 
 
 [profile.dev]

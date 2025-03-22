@@ -1,15 +1,13 @@
-﻿use std::sync::Arc;
+use std::sync::Arc;
 
 use ctx::WgpuCtx;
+use log::{debug, trace};
 use winit::application::ApplicationHandler;
 use winit::event::WindowEvent;
-use log::{debug,trace};
-use winit::event_loop::{ActiveEventLoop, EventLoop};
 use winit::event_loop::ControlFlow;
-
+use winit::event_loop::{ActiveEventLoop, EventLoop};
 use winit::window::{Window, WindowId};
 pub mod ctx;
-
 
 #[derive(Default)]
 pub struct App<'window> {
@@ -17,14 +15,15 @@ pub struct App<'window> {
     ctx: Option<WgpuCtx<'window>>,
 }
 
-
 impl ApplicationHandler for App<'_> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if self.window.is_none() {
             let win_attr = Window::default_attributes().with_title("Zenyx");
-            let window = Arc::new(event_loop
-                .create_window(win_attr)
-                .expect("create window err."));
+            let window = Arc::new(
+                event_loop
+                    .create_window(win_attr)
+                    .expect("create window err."),
+            );
             self.window = Some(window.clone());
             let wgpu_ctx = WgpuCtx::new_blocking(window.clone()).unwrap();
             self.ctx = Some(wgpu_ctx)
@@ -52,11 +51,12 @@ impl ApplicationHandler for App<'_> {
                 }
             }
             WindowEvent::Resized(size) => {
-                if let (Some(wgpu_ctx),Some(window)) = (&mut self.ctx, &self.window) {
+                if let (Some(wgpu_ctx), Some(window)) = (&mut self.ctx, &self.window) {
                     wgpu_ctx.resize(size.into());
                     window.request_redraw();
                     let size_str: String = size.height.to_string() + "x" + &size.width.to_string();
-                    //self.window.as_ref().unwrap().set_title(&format!("you reszed the window to {size_str}"));
+                    //self.window.as_ref().unwrap().set_title(&format!("you reszed the window to
+                    // {size_str}"));
                     debug!("Window resized to {:?}", size_str);
                 }
             }
