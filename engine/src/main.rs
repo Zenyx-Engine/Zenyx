@@ -1,6 +1,6 @@
 use core::{
     panic::set_panic_hook,
-    repl::{handler::COMMAND_MANAGER, setup},
+    repl::setup,
     splash, workspace,
 };
 

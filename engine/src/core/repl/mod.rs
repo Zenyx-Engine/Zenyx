@@ -5,7 +5,6 @@ use crate::commands;
 pub mod commands;
 pub mod handler;
 pub mod input;
-pub mod zlua;
 
 pub fn setup() {
     commands!(
@@ -14,7 +13,6 @@ pub fn setup() {
         ClearCommand,
         ExitCommand,
         CounterCommand,
-        PanicCommmand,
-        zlua::ZLua
+        PanicCommmand
     );
 }
