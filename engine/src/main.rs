@@ -1,8 +1,4 @@
-use core::{
-    panic::set_panic_hook,
-    repl::setup,
-    splash, workspace,
-};
+use core::{panic::set_panic_hook, repl::setup, splash, workspace};
 
 use colored::Colorize;
 use log::info;
@@ -22,7 +18,10 @@ async fn main() -> anyhow::Result<()> {
     info!("Type 'help' for a list of commands.");
 
     let repl_thread = std::thread::spawn(|| {
-        let rt = runtime::Builder::new_current_thread().enable_all().build().unwrap();
+        let rt = runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
         rt.block_on(core::repl::input::handle_repl())
     });
 
