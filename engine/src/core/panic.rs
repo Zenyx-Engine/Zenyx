@@ -33,8 +33,6 @@ pub fn set_panic_hook() {
                 default_hook(info);
                 std::process::exit(0);
             });
-            
-            // Instead of using payload_as_str(), downcast the panic payload:
             let payload = info.payload();
             let payload_str = if let Some(s) = payload.downcast_ref::<&str>() {
                 *s
@@ -65,7 +63,6 @@ https://github.com/Zenyx-Engine/Zenyx/issues
 We take privacy seriously, and do not perform any automated error collection. In order to improve the software, we rely on people to submit reports.
 
 Thank you kindly!", log_path.display());
-            
             println!("{}", panic_msg.red().bold());
             println!("\nFor future reference, the error summary is as follows:\n{}", payload_str.red().bold());
             std::process::exit(0);

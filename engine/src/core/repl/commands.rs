@@ -33,7 +33,7 @@ impl Command for HelpCommand {
             }
         }
         Ok(())
-    }   
+    }
 
     fn undo(&self) {}
 
