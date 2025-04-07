@@ -19,7 +19,7 @@ parking_lot.workspace = true
 regex = "1.11.1"
 rustyline = { version = "15.0.0", features = ["derive", "rustyline-derive"] }
 thiserror = "2.0.11"
-tokio = { version = "1.42.0", features = ["macros", "parking_lot","rt-multi-thread"] }
+tokio = { version = "1.44.2", features = ["macros", "parking_lot","rt-multi-thread"] }
 wgpu = "24.0.1"
 winit = "0.30.8"
 bytemuck = "1.21.0"
