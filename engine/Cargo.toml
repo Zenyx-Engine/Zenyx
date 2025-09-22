@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 repository = "https://github.com/Zenyx-Engine/Zenyx"
 [dependencies]
-anyhow = "1.0.94"
+anyhow = "1.0.100"
 backtrace = "0.3.74"
 chrono = "0.4.39"
 
